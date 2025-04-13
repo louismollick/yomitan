@@ -7,7 +7,7 @@
     "scripts": {
         "build": "tsc",
         "start": "node dist/server.js",
-        "dev": "ts-node-esm server.ts",
+        "dev": "tsx server.ts",
         "test-lookup": "tsx src/test-lookup.ts"
     },
     "dependencies": {

@@ -1,4 +1,23 @@
-import { integer, text, blob, sqliteTable } from 'drizzle-orm/sqlite-core';
+/*
+ * Copyright (C) 2023-2025  Yomitan Authors
+ * Copyright (C) 2020-2022  Yomichan Authors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import {integer, text, blob, sqliteTable} from 'drizzle-orm/sqlite-core';
+
 // Define the schema for the dictionaries table
 export const dictionaries = sqliteTable('dictionaries', {
     title: text('title').primaryKey(),
@@ -15,9 +34,10 @@ export const dictionaries = sqliteTable('dictionaries', {
     counts: text('counts'), // JSON string
     yomitanVersion: text('yomitan_version'),
 });
+
 // Define the schema for the terms table
 export const terms = sqliteTable('terms', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: integer('id').primaryKey({autoIncrement: true}),
     dictionary: text('dictionary').notNull(),
     expression: text('expression').notNull(),
     reading: text('reading').notNull(),
@@ -30,17 +50,19 @@ export const terms = sqliteTable('terms', {
     sequence: integer('sequence'),
     termTags: text('term_tags'),
 });
+
 // Define the schema for the termMeta table
 export const termMeta = sqliteTable('term_meta', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: integer('id').primaryKey({autoIncrement: true}),
     dictionary: text('dictionary').notNull(),
     term: text('term').notNull(),
     mode: text('mode').notNull(),
     data: text('data').notNull(), // JSON string
 });
+
 // Define the schema for the kanji table
 export const kanji = sqliteTable('kanji', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: integer('id').primaryKey({autoIncrement: true}),
     dictionary: text('dictionary').notNull(),
     character: text('character').notNull(),
     onyomi: text('onyomi').notNull(),
@@ -49,17 +71,19 @@ export const kanji = sqliteTable('kanji', {
     meanings: text('meanings').notNull(), // JSON string
     stats: text('stats'), // JSON string
 });
+
 // Define the schema for the kanjiMeta table
 export const kanjiMeta = sqliteTable('kanji_meta', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: integer('id').primaryKey({autoIncrement: true}),
     dictionary: text('dictionary').notNull(),
     character: text('character').notNull(),
     mode: text('mode').notNull(),
     data: text('data').notNull(), // JSON string
 });
+
 // Define the schema for the tagMeta table
 export const tagMeta = sqliteTable('tag_meta', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: integer('id').primaryKey({autoIncrement: true}),
     dictionary: text('dictionary').notNull(),
     name: text('name').notNull(),
     category: text('category').notNull(),
@@ -67,9 +91,10 @@ export const tagMeta = sqliteTable('tag_meta', {
     notes: text('notes').notNull(),
     score: integer('score').notNull(),
 });
+
 // Define the schema for the media table
 export const media = sqliteTable('media', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: integer('id').primaryKey({autoIncrement: true}),
     dictionary: text('dictionary').notNull(),
     path: text('path').notNull(),
     mediaType: text('media_type').notNull(),
@@ -77,3 +102,31 @@ export const media = sqliteTable('media', {
     height: integer('height').notNull(),
     content: blob('content').notNull(), // Binary data
 });
+
+export type Dictionary = typeof dictionaries.$inferSelect;
+
+export type NewDictionary = typeof dictionaries.$inferInsert;
+
+export type Term = typeof terms.$inferSelect;
+
+export type NewTerm = typeof terms.$inferInsert;
+
+export type TermMeta = typeof termMeta.$inferSelect;
+
+export type NewTermMeta = typeof termMeta.$inferInsert;
+
+export type Kanji = typeof kanji.$inferSelect;
+
+export type NewKanji = typeof kanji.$inferInsert;
+
+export type KanjiMeta = typeof kanjiMeta.$inferSelect;
+
+export type NewKanjiMeta = typeof kanjiMeta.$inferInsert;
+
+export type TagMeta = typeof tagMeta.$inferSelect;
+
+export type NewTagMeta = typeof tagMeta.$inferInsert;
+
+export type Media = typeof media.$inferSelect;
+
+export type NewMedia = typeof media.$inferInsert;

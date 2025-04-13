@@ -1,24 +1,76 @@
+/*
+ * Copyright (C) 2023-2025  Yomitan Authors
+ * Copyright (C) 2020-2022  Yomichan Authors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import Database from 'better-sqlite3';
-import {drizzle} from 'drizzle-orm/better-sqlite3';
+import {type BetterSQLite3Database, drizzle} from 'drizzle-orm/better-sqlite3';
 import fs from 'fs/promises';
 import path from 'path';
 import * as schema from './schema.js';
+
 /**
  * SQLiteDatabase class that provides a wrapper around better-sqlite3 and drizzle-orm
  */
 export class SQLiteDatabase {
+    /**
+     * The better-sqlite3 database instance
+     */
+    private _db: Database.Database | null;
+    /**
+     * The drizzle-orm database instance
+     */
+    private _drizzle: BetterSQLite3Database<typeof schema> | null;
+    /**
+     * Whether the database is currently in the process of opening
+     */
+    private _isOpening: boolean;
+    /**
+     * The path to the database file
+     */
+    private _dbPath: string;
+
+    /**
+     * Creates a new SQLiteDatabase instance
+     */
     constructor() {
+        /**
+         *
+         */
         this._db = null;
+        /**
+         *
+         */
         this._drizzle = null;
+        /**
+         *
+         */
         this._isOpening = false;
+        /**
+         *
+         */
         this._dbPath = '';
     }
+
     /**
      * Open a SQLite database connection
-     * @param {string} databaseName - The name of the database file
-     * @returns {Promise<void>}
+     * @param {string} databaseName The name of the database file
+     * @throws Error if database is already open or in the process of opening
      */
-    async open(databaseName) {
+    async open(databaseName: string): Promise<void> {
         if (this._db !== null) {
             throw new Error('Database already open');
         }
@@ -31,70 +83,73 @@ export class SQLiteDatabase {
             // Create the database directory if it doesn't exist
             const dbDir = path.dirname(databaseName);
             if (dbDir !== '.') {
-                await fs.mkdir(dbDir, { recursive: true });
+                await fs.mkdir(dbDir, {recursive: true});
             }
             // Open the database connection
             this._db = new Database(databaseName);
-            this._drizzle = drizzle(this._db, { schema });
+            this._drizzle = drizzle(this._db, {schema});
             // Create tables if they don't exist
             this._createTables();
             // Create indices for better performance
             this._createIndices();
-        }
-        finally {
+        } finally {
             this._isOpening = false;
         }
     }
+
     /**
      * Close the database connection
-     * @returns {Promise<void>}
      */
-    async close() {
+    async close(): Promise<void> {
         if (this._db) {
             this._db.close();
             this._db = null;
             this._drizzle = null;
         }
     }
+
     /**
      * Check if the database is currently opening
-     * @returns {boolean}
+     * @returns {boolean} Whether the database is opening
      */
-    isOpening() {
+    isOpening(): boolean {
         return this._isOpening;
     }
+
     /**
      * Get the drizzle database instance
-     * @returns {object} The drizzle database instance
+     * @returns {BetterSQLite3Database<typeof schema>} The drizzle database instance
+     * @throws Error if database is not open
      */
-    getDb() {
+    getDb(): BetterSQLite3Database<typeof schema> {
         if (!this._drizzle) {
             throw new Error('Database not open');
         }
         return this._drizzle;
     }
+
     /**
      * Delete the database file
-     * @param {string} databaseName - The name of the database file
-     * @returns {Promise<void>}
+     * @param {string} databaseName The name of the database file
+     * @throws Error if the file cannot be deleted (except if it doesn't exist)
      */
-    async deleteDatabase(databaseName) {
+    async deleteDatabase(databaseName: string): Promise<void> {
         try {
             await fs.unlink(databaseName);
-        }
-        catch (error) {
-            if (error.code !== 'ENOENT') {
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
                 throw error;
             }
         }
     }
+
     /**
      * Create database tables
      * @private
      */
-    _createTables() {
+    private _createTables(): void {
         // Create tables using SQL statements
-        this._db.exec(`
+        this._db?.exec(`
       CREATE TABLE IF NOT EXISTS dictionaries (
         title TEXT PRIMARY KEY,
         version INTEGER NOT NULL,
@@ -174,13 +229,14 @@ export class SQLiteDatabase {
       );
     `);
     }
+
     /**
      * Create indices for better query performance
      * @private
      */
-    _createIndices() {
+    private _createIndices(): void {
         // Create indices using SQL statements
-        this._db.exec(`
+        this._db?.exec(`
       CREATE INDEX IF NOT EXISTS idx_terms_dictionary ON terms(dictionary);
       CREATE INDEX IF NOT EXISTS idx_terms_expression ON terms(expression);
       CREATE INDEX IF NOT EXISTS idx_terms_reading ON terms(reading);

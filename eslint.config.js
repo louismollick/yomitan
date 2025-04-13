@@ -112,6 +112,7 @@ export default [
                     './dev/jsconfig.json',
                     './test/jsconfig.json',
                     './benches/jsconfig.json',
+                    './node-server/tsconfig.json',
                 ],
             },
         },
