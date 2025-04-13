@@ -929,4 +929,12 @@ export default [
             }],
         },
     },
+    {
+        files: [
+            'node-server/src/database/dictionary-database.ts',
+        ],
+        rules: {
+            'no-undefined': 'off',
+        },
+    },
 ];
