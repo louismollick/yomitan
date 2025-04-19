@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {fetchText} from '../core/fetch-utilities.js';
+import fs from 'fs';
+import path from 'path';
 
 export class HtmlTemplateCollection {
     constructor() {
@@ -28,7 +29,7 @@ export class HtmlTemplateCollection {
      * @param {string[]} urls
      */
     async loadFromFiles(urls) {
-        const htmlRawArray = await Promise.all(urls.map((url) => fetchText(url)));
+        const htmlRawArray = await Promise.all(urls.map((url) => fs.readFileSync(path.join(process.cwd(), '../ext/', url), 'utf8')));
         const domParser = new DOMParser();
         for (const htmlRaw of htmlRawArray) {
             const templatesDocument = domParser.parseFromString(htmlRaw, 'text/html');
