@@ -16,12 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {defineConfig} from 'drizzle-kit';
+import {Yomitan} from './dist/index.js';
 
-export default defineConfig({
-    dialect: 'sqlite',
-    schema: 'src/database/schema.ts',
-    dbCredentials: {
-        url: 'file:dict.sqlite',
-    },
-});
+const yomitan = new Yomitan();
+
+await yomitan.initialize();
+
+const result = await yomitan.lookupTerm('日本語');
+
+console.log(yomitan.generateHtml(result.dictionaryEntries));
