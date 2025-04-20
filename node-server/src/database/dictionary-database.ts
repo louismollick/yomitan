@@ -45,25 +45,25 @@ import type {TermGlossary} from '../../../types/ext/dictionary-data.js';
 // Main DictionaryDatabase class
 export class DictionaryDatabase {
     /**
-     *
+     * The SQLiteDatabase instance
      */
     private _db: SQLiteDatabase;
     /**
-     *
+     * The name/filename of the sqlite database
      */
     private _dbName: string;
     /**
-     *
+     * Whether the database is open
      */
     private _isOpen: boolean = false;
 
     constructor() {
         /**
-         *
+         * The name/filename of the sqlite database
          */
-        this._dbName = 'dict.sqlite';
+        this._dbName = 'file:dict.sqlite';
         /**
-         *
+         * Initialize the SQLiteDatabase instance
          */
         this._db = new SQLiteDatabase();
     }
@@ -206,7 +206,7 @@ export class DictionaryDatabase {
         const results: TermEntry[] = [];
         const db = this._db.getDb();
         for (let i = 0; i < termList.length; i++) {
-            const {term, reading} = termList[i];
+            const {term, reading} = termList[i]!;
 
             const rows = await db.select().from(schema.terms)
                 .where(and(
@@ -261,7 +261,7 @@ export class DictionaryDatabase {
         const db = this._db.getDb();
 
         for (let i = 0; i < kanjiList.length; i++) {
-            const character = kanjiList[i];
+            const character = kanjiList[i]!;
 
             const rows = await db.select().from(schema.kanji)
                 .where(eq(schema.kanji.character, character));
@@ -309,7 +309,7 @@ export class DictionaryDatabase {
         const db = this._db.getDb();
 
         for (let i = 0; i < termList.length; i++) {
-            const term = termList[i];
+            const term = termList[i]!;
 
             const rows = await db.select().from(schema.termMeta)
                 .where(eq(schema.termMeta.term, term));
@@ -348,7 +348,7 @@ export class DictionaryDatabase {
         const db = this._db.getDb();
 
         for (let i = 0; i < kanjiList.length; i++) {
-            const character = kanjiList[i];
+            const character = kanjiList[i]!;
 
             const rows = await db.select().from(schema.kanjiMeta)
                 .where(eq(schema.kanjiMeta.character, character));
@@ -386,7 +386,7 @@ export class DictionaryDatabase {
         const db = this._db.getDb();
 
         for (let i = 0; i < tagList.length; i++) {
-            const {name, dictionary} = tagList[i];
+            const {name, dictionary} = tagList[i]!;
 
             const rows = await db.select().from(schema.tagMeta)
                 .where(and(
