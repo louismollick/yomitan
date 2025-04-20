@@ -99,10 +99,10 @@ class ServerDisplayContentManager implements DisplayContentManager {
      * Queue loading media file from a given dictionary
      * @param {string} filePath The path of the media file
      * @param {string} dictionary The dictionary name
-     * @param {unknown} canvas The canvas to draw the media on
+     * @param {OffscreenCanvas} canvas The canvas to draw the media on
      */
-    loadMedia(path: string, dictionary: string, canvas: OffscreenCanvas): void {
-        this._loadMediaRequests.push({ path, dictionary, canvas });
+    loadMedia(filePath: string, dictionary: string, canvas: OffscreenCanvas): void {
+        this._loadMediaRequests.push({path: filePath, dictionary, canvas});
     }
 
     /**
@@ -218,6 +218,7 @@ export class Yomitan {
      * Generates HTML from dictionary entries
      * @param {TermDictionaryEntry[]} dictionaryEntries The dictionary entries to render
      * @returns {Promise<string>} The generated HTML
+     * @throws {Error} If the display generator is not initialized
      */
     private generateHtml(dictionaryEntries: TermDictionaryEntry[]): Promise<string> {
         if (!this.displayGenerator) {
