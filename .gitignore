@@ -15,6 +15,7 @@ ext/manifest.json
 
 ext/lib/*
 
-node-server/dist
-node-server/dict.sqlite
-node-server/jitendex-yomitan.zip
+dist
+dict.sqlite
+jitendex-yomitan.zip
+.tsup

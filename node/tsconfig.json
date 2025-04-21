@@ -3,8 +3,12 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "target": "es2022",
+        "outDir": "dist",
+        "rootDir": "..",
+        "baseUrl": "..",
         "verbatimModuleSyntax": true,
         "allowJs": true,
+        "checkJs": false,
         "resolveJsonModule": true,
         "moduleDetection": "force",
         "strict": true,
@@ -12,5 +16,7 @@
         "moduleResolution": "Bundler",
         "module": "ESNext",
         "noEmit": true
-    }
+    },
+    "files": ["index.ts"],
+    "exclude": ["**/*.js"]
 }

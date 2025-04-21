@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as ajvSchemas0 from '../../lib/validate-schemas.js';
+// import * as ajvSchemas0 from '../../lib/validate-schemas.js';
 import {
     BlobWriter as BlobWriter0,
     TextWriter as TextWriter0,
@@ -24,14 +24,14 @@ import {
     ZipReader as ZipReader0,
     configure,
 } from '../../lib/zip.js';
-import {compareRevisions} from './dictionary-data-util.js';
 import {ExtensionError} from '../core/extension-error.js';
 import {parseJson} from '../core/json.js';
 import {toError} from '../core/to-error.js';
 import {stringReverse} from '../core/utilities.js';
 import {getFileExtensionFromImageMediaType, getImageMediaTypeFromFileName} from '../media/media-util.js';
+import {compareRevisions} from './dictionary-data-util.js';
 
-const ajvSchemas = /** @type {import('dictionary-importer').CompiledSchemaValidators} */ (/** @type {unknown} */ (ajvSchemas0));
+// const ajvSchemas = /** @type {import('dictionary-importer').CompiledSchemaValidators} */ (/** @type {unknown} */ (ajvSchemas0));
 const BlobWriter = /** @type {typeof import('@zip.js/zip.js').BlobWriter} */ (/** @type {unknown} */ (BlobWriter0));
 const TextWriter = /** @type {typeof import('@zip.js/zip.js').TextWriter} */ (/** @type {unknown} */ (TextWriter0));
 const Uint8ArrayReader = /** @type {typeof import('@zip.js/zip.js').Uint8ArrayReader} */ (/** @type {unknown} */ (Uint8ArrayReader0));
@@ -258,9 +258,9 @@ export class DictionaryImporter {
         const indexContent = await this._getData(indexFile2, new TextWriter());
         const index = /** @type {unknown} */ (parseJson(indexContent));
 
-        if (!ajvSchemas.dictionaryIndex(index)) {
-            throw this._formatAjvSchemaError(ajvSchemas.dictionaryIndex, indexFileName);
-        }
+        // if (!ajvSchemas.dictionaryIndex(index)) {
+        //     throw this._formatAjvSchemaError(ajvSchemas.dictionaryIndex, indexFileName);
+        // }
 
         const validIndex = /** @type {import('dictionary-data').Index} */ (index);
 
@@ -838,10 +838,10 @@ export class DictionaryImporter {
             startIndex = progressData.index;
             this._progress();
 
-            const schema = ajvSchemas[schemaName];
-            if (!schema(entries)) {
-                throw this._formatAjvSchemaError(schema, file.filename);
-            }
+            // const schema = ajvSchemas[schemaName];
+            // if (!schema(entries)) {
+            //     throw this._formatAjvSchemaError(schema, file.filename);
+            // }
 
             progressData.index = startIndex + 1;
             this._progress();

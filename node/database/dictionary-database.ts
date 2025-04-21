@@ -19,7 +19,7 @@
 import * as schema from './schema.js';
 import {eq, like, and, count as _count} from 'drizzle-orm';
 import {SQLiteDatabase} from './sqlite-database.js';
-import {parseJson} from '../../../ext/js/core/json.js';
+import {parseJson} from '../../ext/js/core/json.js';
 import type {
     DictionaryCounts,
     DictionarySet,
@@ -38,9 +38,9 @@ import type {
     DatabaseKanjiEntry,
     DatabaseKanjiMeta,
     MediaDataArrayBufferContent,
-} from '../../../types/ext/dictionary-database.js';
-import type {Summary} from '../../../types/ext/dictionary-importer.js';
-import type {TermGlossary} from '../../../types/ext/dictionary-data.js';
+} from '../../types/ext/dictionary-database.js';
+import type {Summary} from '../../types/ext/dictionary-importer.js';
+import type {TermGlossary} from '../../types/ext/dictionary-data.js';
 
 // Main DictionaryDatabase class
 export class DictionaryDatabase {
@@ -319,6 +319,7 @@ export class DictionaryDatabase {
                     results.push({
                         index: i,
                         term: row.term,
+                        // @ts-ignore - While there's 3 separate types, they all have same fields
                         mode: row.mode,
                         data: parseJson(row.data),
                         dictionary: row.dictionary,
@@ -448,7 +449,7 @@ export class DictionaryDatabase {
         const counts: DictionaryCountGroup[] = [];
 
         for (const dictionary of dictionaryNames) {
-            const countGroup: DictionaryCountGroup = {dictionary};
+            const countGroup: DictionaryCountGroup = {};
 
             // Count terms
             const termCount = await db.select({count: _count()})
@@ -492,19 +493,22 @@ export class DictionaryDatabase {
         let total: DictionaryCountGroup | null = null;
 
         if (getTotal) {
-            total = {dictionary: 'total'};
-
-            // Calculate totals
-            for (const count of counts) {
-                for (const [key, value] of Object.entries(count)) {
-                    if (key !== 'dictionary') {
-                        if (total[key] === undefined) {
-                            total[key] = 0;
-                        }
-                        total[key] = Number(total[key]) + Number(value);
-                    }
-                }
-            }
+            total = counts.reduce((acc, cur) => {
+                acc.terms! += cur.terms!;
+                acc.kanji! += cur.kanji!;
+                acc.termMeta! += cur.termMeta!;
+                acc.kanjiMeta! += cur.kanjiMeta!;
+                acc.tagMeta! += cur.tagMeta!;
+                acc.media! += cur.media!;
+                return acc;
+            }, {
+                terms: 0,
+                kanji: 0,
+                termMeta: 0,
+                kanjiMeta: 0,
+                tagMeta: 0,
+                media: 0,
+            });
         }
 
         return {total, counts};

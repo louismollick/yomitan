@@ -16,10 +16,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { createRequire } from 'node:module';
+import type * as DrizzleKit from 'drizzle-kit/api';
 import {createClient, type Client as LibSqlClient} from '@libsql/client';
 import {drizzle, type LibSQLDatabase} from 'drizzle-orm/libsql';
 import fs from 'fs/promises';
 import * as schema from './schema.js';
+
+// Hack for ESM -- https://github.com/drizzle-team/drizzle-orm/issues/2853
+// TODO: figure how to do this cleaner by separating exports for ESM/CJS
+let _require: NodeJS.Require;
+if (typeof import.meta.url === 'string') {
+    _require = createRequire(import.meta.url);
+} else {
+    _require = require;
+}
+const { pushSQLiteSchema } = _require('drizzle-kit/api') as typeof DrizzleKit;
 
 /**
  * SQLiteDatabase class that provides a wrapper around better-sqlite3 and drizzle-orm
@@ -74,6 +86,10 @@ export class SQLiteDatabase {
                 url: databaseName,
             });
             this._drizzle = drizzle(this._client, {schema});
+            console.log("Pushing DB...")
+            const {apply} = await pushSQLiteSchema(schema, this._drizzle);
+            await apply();
+            console.log("Done pushing DB.")
         } finally {
             this._isOpening = false;
         }

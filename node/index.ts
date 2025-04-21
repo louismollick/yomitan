@@ -17,17 +17,19 @@
  */
 
 import 'global-jsdom/register';
-import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import {DictionaryDatabase} from './src/database/dictionary-database.js';
-import {DictionaryImporter} from '../ext/js/dictionary/dictionary-importer.js';
-import {Translator} from '../ext/js/language/translator.js';
-import {createFindTermsOptions} from '../test/utilities/translator.js';
-import {DisplayGenerator} from '../ext/js/display/display-generator.js';
-import type {ImportResult, Summary} from '../types/ext/dictionary-importer.js';
-import type {DisplayContentManager} from '../ext/js/display/display-content-manager.js';
-import type {TermDictionaryEntry} from '../types/ext/dictionary.js';
+import {DictionaryDatabase} from 'node/database/dictionary-database.js';
+import {DictionaryImporter} from 'ext/js/dictionary/dictionary-importer.js';
+import {Translator} from 'ext/js/language/translator.js';
+import {createFindTermsOptions} from 'test/utilities/translator.js';
+import {DisplayGenerator} from 'ext/js/display/display-generator.js';
+import type {ImportResult, Summary} from 'types/ext/dictionary-importer';
+import type {LoadMediaRequest} from 'types/ext/display-content-manager.js';
+import type {TermDictionaryEntry} from 'types/ext/dictionary.js';
+import type {DisplayContentManager} from 'ext/js/display/display-content-manager.js';
+
+interface LookupTermResult {dictionaryEntries: TermDictionaryEntry[], originalTextLength: number}
 
 const linkElements = document.createElement('div');
 linkElements.innerHTML = '<link rel="icon" type="image/png" href="/images/icon16.png" sizes="16x16"><link rel="icon" type="image/png" href="/images/icon19.png" sizes="19x19"><link rel="icon" type="image/png" href="/images/icon32.png" sizes="32x32"><link rel="icon" type="image/png" href="/images/icon38.png" sizes="38x38"><link rel="icon" type="image/png" href="/images/icon48.png" sizes="48x48"><link rel="icon" type="image/png" href="/images/icon64.png" sizes="64x64"><link rel="icon" type="image/png" href="/images/icon128.png" sizes="128x128"><link rel="stylesheet" type="text/css" href="/css/material.css"><link rel="stylesheet" type="text/css" href="/css/display.css"><link rel="stylesheet" type="text/css" href="/css/display-pronunciation.css"><link rel="stylesheet" type="text/css" href="/css/structured-content.css">';
@@ -60,7 +62,7 @@ class SimpleMediaLoader {
  */
 class ServerDisplayContentManager implements DisplayContentManager {
     /** Media load requests */
-    _loadMediaRequests: {path: string, dictionary: string, canvas: unknown}[] = [];
+    _loadMediaRequests: LoadMediaRequest[] = [];
     /** Event listeners collection */
     _eventListeners = {
         removeAllEventListeners: () => {},
@@ -97,16 +99,16 @@ class ServerDisplayContentManager implements DisplayContentManager {
      * Queue loading media file from a given dictionary
      * @param {string} filePath The path of the media file
      * @param {string} dictionary The dictionary name
-     * @param {unknown} canvas The canvas to draw the media on
+     * @param {OffscreenCanvas} canvas The canvas to draw the media on
      */
-    loadMedia(filePath: string, dictionary: string, canvas: unknown) {
+    loadMedia(filePath: string, dictionary: string, canvas: OffscreenCanvas): void {
         this._loadMediaRequests.push({path: filePath, dictionary, canvas});
     }
 
     /**
      * Unloads all media that has been loaded
      */
-    unloadAll() {
+    unloadAll(): void {
         this._token = {};
         this._eventListeners.removeAllEventListeners();
         this._loadMediaRequests = [];
@@ -155,92 +157,70 @@ class ServerDisplayContentManager implements DisplayContentManager {
 /**
  * Main application class for the Yomitan server
  */
-class YomitanServer {
+export class Yomitan {
     /** The dictionary database instance */
     private dictionaryDatabase!: DictionaryDatabase;
     /** The translator instance */
     private translator!: Translator;
     /** The name of the loaded dictionary */
     private dictionaryName = '';
-    /** The Express application instance */
-    private app = express();
-    /** The port number to listen on */
-    private port = 3000;
     /** The display generator */
     private displayGenerator: DisplayGenerator | null = null;
     /** Dictionary info */
     private dictionaryInfo: Summary[] = [];
 
     /**
-     * Creates a new instance of the YomitanServer
+     * Lookup a term
+     * @param {string} term The term to lookup
+     * @returns {Promise<LookupTermResult>} The lookup result
+     * @private
      */
-    constructor() {
-        // eslint-disable-next-line no-restricted-syntax
-        this.app.use(express.json());
-        this.app.use(express.static(path.join(process.cwd(), '../ext')));
-        this.setupRoutes();
+    public async lookupTerm(term: string) {
+        try {
+            if (!term) {
+                throw new Error('Term parameter is required');
+            }
+
+            if (!this.translator) {
+                throw new Error('Translator not initialized');
+            }
+
+            // Create options for the lookup
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const options = createFindTermsOptions(this.dictionaryName, {
+                default: {
+                    type: 'terms',
+                    enabledDictionaryMap: [[this.dictionaryName, true]],
+                    removeNonJapaneseCharacters: false,
+                    language: 'ja',
+                },
+            }, 'default');
+
+            // Perform the lookup
+            return this.translator.findTerms('simple', term, options) as Promise<LookupTermResult>;
+        } catch (error) {
+            console.error('Error during lookup:', error);
+            throw new Error('An error occurred during lookup');
+        }
     }
 
     /**
-     * Sets up the server routes
-     * @private
+     * Lookup a term
+     * @param {string} term The term to lookup
+     * @returns {Promise<string>} The HTML representation of the lookup result
      */
-    private setupRoutes() {
-        this.app.get('/lookup/:term', async (req, res) => {
-            try {
-                const term = req.params.term;
-                if (!term) {
-                    return res.status(400).send({error: 'Term parameter is required'});
-                }
-
-                if (!this.translator) {
-                    return res.status(500).send({error: 'Translator not initialized'});
-                }
-
-                // Create options for the lookup
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const options = createFindTermsOptions(this.dictionaryName, {
-                    default: {
-                        type: 'terms',
-                        enabledDictionaryMap: [[this.dictionaryName, true]],
-                        removeNonJapaneseCharacters: false,
-                        language: 'ja',
-                    },
-                }, 'default');
-
-                // Perform the lookup
-                const result = await this.translator.findTerms('simple', term, options);
-
-                // Check if HTML output is requested
-                const format = req.query.format || 'json';
-                if (format === 'html' && this.displayGenerator) {
-                    const html = await this.generateHtml(result.dictionaryEntries as TermDictionaryEntry[]);
-                    res.send(html);
-                } else {
-                    res.send(result);
-                }
-            } catch (error) {
-                console.error('Error during lookup:', error);
-                res.status(500).send({error: 'An error occurred during lookup'});
-            }
-        });
-
-        this.app.get('/health', (_req, res) => {
-            res.send({
-                status: 'ok',
-                databaseInitialized: !!this.dictionaryDatabase,
-                translatorInitialized: !!this.translator,
-                dictionaryName: this.dictionaryName || 'Not loaded',
-            });
-        });
+    public async lookupTermHtml(term: string) {
+        const result = await this.lookupTerm(term);
+        return this.generateHtml(result.dictionaryEntries);
     }
 
     /**
      * Generates HTML from dictionary entries
      * @param {TermDictionaryEntry[]} dictionaryEntries The dictionary entries to render
      * @returns {Promise<string>} The generated HTML
+     * @throws {Error} If the display generator is not initialized
      */
-    private async generateHtml(dictionaryEntries: TermDictionaryEntry[]): Promise<string> {
+    public generateHtml(dictionaryEntries: TermDictionaryEntry[]): Promise<string> {
         if (!this.displayGenerator) {
             throw new Error('Display generator not initialized');
         }
@@ -262,7 +242,7 @@ class YomitanServer {
      * Initializes the dictionary database and translator
      * @returns {Promise<boolean>} True if initialization succeeded, false otherwise
      */
-    async initialize(): Promise<boolean> {
+    public async initialize(): Promise<boolean> {
         try {
             console.log('Initializing dictionary database...');
             this.dictionaryDatabase = new DictionaryDatabase();
@@ -272,8 +252,8 @@ class YomitanServer {
             // Import dictionary from zip file
             // Try different possible locations for the dictionary zip file
             const possiblePaths = [
-                path.resolve(process.cwd(), 'node-server/jitendex-yomitan.zip'),
                 path.resolve(process.cwd(), 'jitendex-yomitan.zip'),
+                path.resolve(process.cwd(), 'node/jitendex-yomitan.zip'),
                 path.resolve(process.cwd(), '../jitendex-yomitan.zip'),
             ];
 
@@ -351,25 +331,4 @@ class YomitanServer {
             return false;
         }
     }
-
-    /**
-     * Starts the server
-     */
-    async start(): Promise<void> {
-        const initialized = await this.initialize();
-        if (!initialized) {
-            console.error('Failed to initialize. Exiting...');
-            process.exit(1);
-        }
-
-        this.app.listen(this.port, () => {
-            console.log(`Yomitan server running at http://localhost:${this.port}`);
-            console.log(`Try a lookup: http://localhost:${this.port}/lookup/日本語`);
-            console.log(`For HTML output: http://localhost:${this.port}/lookup/日本語?format=html`);
-        });
-    }
 }
-
-// Start the server
-const server = new YomitanServer();
-void server.start();
