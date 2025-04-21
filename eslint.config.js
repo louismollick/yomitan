@@ -112,7 +112,6 @@ export default [
                     './dev/jsconfig.json',
                     './test/jsconfig.json',
                     './benches/jsconfig.json',
-                    './node-server/tsconfig.json',
                 ],
             },
         },
@@ -927,14 +926,6 @@ export default [
                     type: 'asc',
                 },
             }],
-        },
-    },
-    {
-        files: [
-            'node-server/src/database/dictionary-database.ts',
-        ],
-        rules: {
-            'no-undefined': 'off',
         },
     },
 ];
