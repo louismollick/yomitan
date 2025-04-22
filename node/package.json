@@ -7,7 +7,7 @@
     "types": "dist/index.d.ts",
     "type": "module",
     "scripts": {
-        "build": "tsup index.ts --format cjs,esm --experimental-dts --external esbuild",
+        "build": "tsup --config tsup.config.ts",
         "release": "pnpm run build && changeset publish",
         "lint": "tsc",
         "dev:mjs": "tsx test-mjs.ts",
@@ -22,6 +22,7 @@
         "@microsoft/api-extractor": "^7.52.4",
         "@types/node": "^18.15.11",
         "drizzle-kit": "^0.31.0",
+        "esbuild-plugin-copy": "^2.1.1",
         "tsup": "^8.4.0",
         "tsx": "^4.19.3",
         "typescript": "^5.8.3"

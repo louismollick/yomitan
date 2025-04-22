@@ -29,7 +29,8 @@ export class HtmlTemplateCollection {
      * @param {string[]} urls
      */
     async loadFromFiles(urls) {
-        const htmlRawArray = await Promise.all(urls.map((url) => fs.readFileSync(path.join(process.cwd(), '../ext/', url), 'utf8')));
+        const distDir = import.meta.dirname ?? __dirname; // TODO: figure how to do this cleaner by separating exports for ESM/CJS
+        const htmlRawArray = await Promise.all(urls.map((url) => fs.readFileSync(path.join(distDir, url), 'utf8')));
         const domParser = new DOMParser();
         for (const htmlRaw of htmlRawArray) {
             const templatesDocument = domParser.parseFromString(htmlRaw, 'text/html');
