@@ -16,8 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import fs from 'fs';
-import path from 'path';
+import {fetchText} from '../core/fetch-utilities.js';
 
 export class HtmlTemplateCollection {
     constructor() {
@@ -29,9 +28,7 @@ export class HtmlTemplateCollection {
      * @param {string[]} urls
      */
     async loadFromFiles(urls) {
-        // eslint-disable-next-line unicorn/prefer-module
-        const distDir = import.meta.dirname ?? __dirname; // TODO: figure how to do this cleaner by separating exports for ESM/CJS
-        const htmlRawArray = await Promise.all(urls.map((url) => fs.readFileSync(path.join(distDir, url), 'utf8')));
+        const htmlRawArray = await Promise.all(urls.map((url) => fetchText(url)));
         const domParser = new DOMParser();
         for (const htmlRaw of htmlRawArray) {
             const templatesDocument = domParser.parseFromString(htmlRaw, 'text/html');

@@ -52,7 +52,7 @@ export class DictionaryImporter {
     }
 
     /**
-     * @param {import('./dictionary-database.js').DictionaryDatabase} dictionaryDatabase
+     * @param {import('./../../../yomitan-node/database/dictionary-database').DictionaryDatabase} dictionaryDatabase
      * @param {ArrayBuffer} archiveContent
      * @param {import('dictionary-importer').ImportDetails} details
      * @returns {Promise<import('dictionary-importer').ImportResult>}
@@ -82,10 +82,14 @@ export class DictionaryImporter {
         const version = /** @type {import('dictionary-data').IndexVersion} */ (index.version);
 
         // Verify database is not already imported
-        if (await dictionaryDatabase.dictionaryExists(dictionaryTitle)) {
+        const dictionariesInfo = await dictionaryDatabase.getDictionaryInfo();
+        const foundDictionary = dictionariesInfo.find((entry) => entry.title === dictionaryTitle);
+        if (foundDictionary) {
+            // eslint-disable-next-line no-console
+            console.log(`Dictionary ${dictionaryTitle} is already imported, skipped it.`);
             return {
-                errors: [new Error(`Dictionary ${dictionaryTitle} is already imported, skipped it.`)],
-                result: null,
+                errors: [],
+                result: foundDictionary,
             };
         }
 

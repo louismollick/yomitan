@@ -15,26 +15,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {readResponseJson} from './json.js';
+import {promises as fs} from 'fs';
+import path from 'path';
+import {parseJson} from './json.js';
 
-/**
- * @param {string} url
- * @returns {Promise<Response>}
- */
-async function fetchAsset(url) {
-    const response = await fetch(chrome.runtime.getURL(url), {
-        method: 'GET',
-        mode: 'no-cors',
-        cache: 'default',
-        credentials: 'omit',
-        redirect: 'follow',
-        referrerPolicy: 'no-referrer',
-    });
-    if (!response.ok) {
-        throw new Error(`Failed to fetch ${url}: ${response.status}`);
-    }
-    return response;
-}
+// /**
+//  * @param {string} url
+//  * @returns {Promise<Response>}
+//  */
+// async function fetchAsset(url) {
+//     const response = await fetch(chrome.runtime.getURL(url), {
+//         method: 'GET',
+//         mode: 'no-cors',
+//         cache: 'default',
+//         credentials: 'omit',
+//         redirect: 'follow',
+//         referrerPolicy: 'no-referrer',
+//     });
+//     if (!response.ok) {
+//         throw new Error(`Failed to fetch ${url}: ${response.status}`);
+//     }
+//     return response;
+// }
 
 
 /**
@@ -42,8 +44,9 @@ async function fetchAsset(url) {
  * @returns {Promise<string>}
  */
 export async function fetchText(url) {
-    const response = await fetchAsset(url);
-    return await response.text();
+    // eslint-disable-next-line unicorn/prefer-module
+    const distDir = import.meta.dirname ?? __dirname; // TODO: figure how to do this cleaner by separating exports for ESM/CJS
+    return fs.readFile(path.join(distDir, url), 'utf8');
 }
 
 /**
@@ -52,6 +55,8 @@ export async function fetchText(url) {
  * @returns {Promise<T>}
  */
 export async function fetchJson(url) {
-    const response = await fetchAsset(url);
-    return await readResponseJson(response);
+    // eslint-disable-next-line unicorn/prefer-module
+    const distDir = import.meta.dirname ?? __dirname; // TODO: figure how to do this cleaner by separating exports for ESM/CJS
+    const text = await fs.readFile(path.join(distDir, url), 'utf8');
+    return parseJson(text);
 }

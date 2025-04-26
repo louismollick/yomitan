@@ -16,50 +16,52 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable no-underscore-dangle */
+
+import {promises as fs} from 'fs';
 import {ExtensionError} from '../../core/extension-error.js';
 import {readResponseJson} from '../../core/json.js';
 import {log} from '../../core/log.js';
 import {toError} from '../../core/to-error.js';
 import {getKebabCase} from '../../data/anki-template-util.js';
-import {DictionaryWorker} from '../../dictionary/dictionary-worker.js';
+import {DictionaryWorkerHandler} from '../../dictionary/dictionary-worker-handler.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
 import {DictionaryController} from './dictionary-controller.js';
 
 export class DictionaryImportController {
     /**
      * @param {import('./settings-controller.js').SettingsController} settingsController
-     * @param {import('./modal-controller.js').ModalController} modalController
-     * @param {import('./status-footer.js').StatusFooter} statusFooter
      */
-    constructor(settingsController, modalController, statusFooter) {
+    constructor(settingsController) {
         /** @type {import('./settings-controller.js').SettingsController} */
         this._settingsController = settingsController;
-        /** @type {import('./modal-controller.js').ModalController} */
-        this._modalController = modalController;
-        /** @type {import('./status-footer.js').StatusFooter} */
-        this._statusFooter = statusFooter;
-        /** @type {boolean} */
-        this._modifying = false;
-        /** @type {HTMLButtonElement} */
-        this._purgeButton = querySelectorNotNull(document, '#dictionary-delete-all-button');
-        /** @type {HTMLButtonElement} */
-        this._purgeConfirmButton = querySelectorNotNull(document, '#dictionary-confirm-delete-all-button');
-        /** @type {HTMLButtonElement} */
-        this._importFileInput = querySelectorNotNull(document, '#dictionary-import-file-input');
-        /** @type {HTMLButtonElement} */
-        this._importFileDrop = querySelectorNotNull(document, '#dictionary-drop-file-zone');
-        /** @type {number} */
-        this._importFileDropItemCount = 0;
-        /** @type {HTMLInputElement} */
-        this._importButton = querySelectorNotNull(document, '#dictionary-import-button');
-        /** @type {HTMLInputElement} */
-        this._importURLButton = querySelectorNotNull(document, '#dictionary-import-url-button');
-        /** @type {HTMLInputElement} */
-        this._importURLText = querySelectorNotNull(document, '#dictionary-import-url-text');
-        /** @type {?import('./modal.js').Modal} */
-        this._purgeConfirmModal = null;
-        /** @type {HTMLElement} */
-        this._errorContainer = querySelectorNotNull(document, '#dictionary-error');
+        // /** @type {import('./modal-controller.js').ModalController} */
+        // this._modalController = modalController;
+        // /** @type {import('./status-footer.js').StatusFooter} */
+        // this._statusFooter = statusFooter;
+        // /** @type {boolean} */
+        // this._modifying = false;
+        // /** @type {HTMLButtonElement} */
+        // this._purgeButton = querySelectorNotNull(document, '#dictionary-delete-all-button');
+        // /** @type {HTMLButtonElement} */
+        // this._purgeConfirmButton = querySelectorNotNull(document, '#dictionary-confirm-delete-all-button');
+        // /** @type {HTMLButtonElement} */
+        // this._importFileInput = querySelectorNotNull(document, '#dictionary-import-file-input');
+        // /** @type {HTMLButtonElement} */
+        // this._importFileDrop = querySelectorNotNull(document, '#dictionary-drop-file-zone');
+        // /** @type {number} */
+        // this._importFileDropItemCount = 0;
+        // /** @type {HTMLInputElement} */
+        // this._importButton = querySelectorNotNull(document, '#dictionary-import-button');
+        // /** @type {HTMLInputElement} */
+        // this._importURLButton = querySelectorNotNull(document, '#dictionary-import-url-button');
+        // /** @type {HTMLInputElement} */
+        // this._importURLText = querySelectorNotNull(document, '#dictionary-import-url-text');
+        // /** @type {?import('./modal.js').Modal} */
+        // this._purgeConfirmModal = null;
+        // /** @type {HTMLElement} */
+        // this._errorContainer = querySelectorNotNull(document, '#dictionary-error');
         /** @type {[originalMessage: string, newMessage: string][]} */
         this._errorToStringOverrides = [
             [
@@ -78,29 +80,29 @@ export class DictionaryImportController {
     }
 
     /** */
-    prepare() {
-        this._importModal = this._modalController.getModal('dictionary-import');
-        this._purgeConfirmModal = this._modalController.getModal('dictionary-confirm-delete-all');
+    // prepare() {
+    // this._importModal = this._modalController.getModal('dictionary-import');
+    // this._purgeConfirmModal = this._modalController.getModal('dictionary-confirm-delete-all');
 
-        this._purgeButton.addEventListener('click', this._onPurgeButtonClick.bind(this), false);
-        this._purgeConfirmButton.addEventListener('click', this._onPurgeConfirmButtonClick.bind(this), false);
-        this._importButton.addEventListener('click', this._onImportButtonClick.bind(this), false);
-        this._importURLButton.addEventListener('click', this._onImportFromURL.bind(this), false);
-        this._importFileInput.addEventListener('change', this._onImportFileChange.bind(this), false);
+    // this._purgeButton.addEventListener('click', this._onPurgeButtonClick.bind(this), false);
+    // this._purgeConfirmButton.addEventListener('click', this._onPurgeConfirmButtonClick.bind(this), false);
+    // this._importButton.addEventListener('click', this._onImportButtonClick.bind(this), false);
+    // this._importURLButton.addEventListener('click', this._onImportFromURL.bind(this), false);
+    // this._importFileInput.addEventListener('change', this._onImportFileChange.bind(this), false);
 
-        this._importFileDrop.addEventListener('click', this._onImportFileButtonClick.bind(this), false);
-        this._importFileDrop.addEventListener('dragenter', this._onFileDropEnter.bind(this), false);
-        this._importFileDrop.addEventListener('dragover', this._onFileDropOver.bind(this), false);
-        this._importFileDrop.addEventListener('dragleave', this._onFileDropLeave.bind(this), false);
-        this._importFileDrop.addEventListener('drop', this._onFileDrop.bind(this), false);
+    // this._importFileDrop.addEventListener('click', this._onImportFileButtonClick.bind(this), false);
+    // this._importFileDrop.addEventListener('dragenter', this._onFileDropEnter.bind(this), false);
+    // this._importFileDrop.addEventListener('dragover', this._onFileDropOver.bind(this), false);
+    // this._importFileDrop.addEventListener('dragleave', this._onFileDropLeave.bind(this), false);
+    // this._importFileDrop.addEventListener('drop', this._onFileDrop.bind(this), false);
 
-        this._settingsController.on('importDictionaryFromUrl', this._onEventImportDictionaryFromUrl.bind(this));
+    // this._settingsController.on('importDictionaryFromUrl', this._onEventImportDictionaryFromUrl.bind(this));
 
-        const recommendedDictionaryButton = document.querySelector('[data-modal-action="show,recommended-dictionaries"]');
-        if (recommendedDictionaryButton) {
-            recommendedDictionaryButton.addEventListener('click', this._renderRecommendedDictionaries.bind(this), false);
-        }
-    }
+    // const recommendedDictionaryButton = document.querySelector('[data-modal-action="show,recommended-dictionaries"]');
+    // if (recommendedDictionaryButton) {
+    //     recommendedDictionaryButton.addEventListener('click', this._renderRecommendedDictionaries.bind(this), false);
+    // }
+    // }
 
     // Private
 
@@ -258,25 +260,25 @@ export class DictionaryImportController {
         void this.importFilesFromURLs(url, profilesDictionarySettings, onImportDone);
     }
 
-    /** */
-    _onImportFileButtonClick() {
-        /** @type {HTMLInputElement} */ (this._importFileInput).click();
-    }
+    // /** */
+    // _onImportFileButtonClick() {
+    //     // /** @type {HTMLInputElement} */ (this._importFileInput).click();
+    // }
 
-    /**
-     * @param {DragEvent} e
-     */
-    _onFileDropEnter(e) {
-        e.preventDefault();
-        if (!e.dataTransfer) { return; }
-        for (const item of e.dataTransfer.items) {
-            // Directories and files with no extension both show as ''
-            if (item.type === '' || item.type === 'application/zip') {
-                this._importFileDrop.classList.add('drag-over');
-                break;
-            }
-        }
-    }
+    // /**
+    //  * @param {DragEvent} e
+    //  */
+    // _onFileDropEnter(e) {
+    //     // e.preventDefault();
+    //     // if (!e.dataTransfer) { return; }
+    //     // for (const item of e.dataTransfer.items) {
+    //     //     // Directories and files with no extension both show as ''
+    //     //     if (item.type === '' || item.type === 'application/zip') {
+    //     //         this._importFileDrop.classList.add('drag-over');
+    //     //         break;
+    //     //     }
+    //     // }
+    // }
 
     /**
      * @param {DragEvent} e
@@ -285,39 +287,40 @@ export class DictionaryImportController {
         e.preventDefault();
     }
 
-    /**
-     * @param {DragEvent} e
-     */
-    _onFileDropLeave(e) {
-        e.preventDefault();
-        this._importFileDrop.classList.remove('drag-over');
-    }
+    // /**
+    //  * @param {DragEvent} e
+    //  */
+    // _onFileDropLeave(e) {
+    //     // e.preventDefault();
+    //     // this._importFileDrop.classList.remove('drag-over');
+    // }
 
     /**
      * @param {DragEvent} e
      */
+    // @ts-ignore
     async _onFileDrop(e) {
-        e.preventDefault();
-        this._importFileDrop.classList.remove('drag-over');
-        if (e.dataTransfer === null) { return; }
-        /** @type {import('./modal.js').Modal} */ (this._importModal).setVisible(false);
-        /** @type {File[]} */
-        const fileArray = [];
-        for (const fileEntry of await this._getAllFileEntries(e.dataTransfer.items)) {
-            if (!fileEntry) { return; }
-            try {
-                fileArray.push(await new Promise((resolve, reject) => { fileEntry.file(resolve, reject); }));
-            } catch (error) {
-                log.error(error);
-            }
-        }
-        const importProgressTracker = new ImportProgressTracker(this._getFileImportSteps(), fileArray.length);
-        void this._importDictionaries(
-            this._arrayToAsyncGenerator(fileArray),
-            null,
-            null,
-            importProgressTracker,
-        );
+        // e.preventDefault();
+        // this._importFileDrop.classList.remove('drag-over');
+        // if (e.dataTransfer === null) { return; }
+        // /** @type {import('./modal.js').Modal} */ (this._importModal).setVisible(false);
+        // /** @type {File[]} */
+        // const fileArray = [];
+        // for (const fileEntry of await this._getAllFileEntries(e.dataTransfer.items)) {
+        //     if (!fileEntry) { return; }
+        //     try {
+        //         fileArray.push(await new Promise((resolve, reject) => { fileEntry.file(resolve, reject); }));
+        //     } catch (error) {
+        //         log.error(error);
+        //     }
+        // }
+        // const importProgressTracker = new ImportProgressTracker(this._getFileImportSteps(), fileArray.length);
+        // void this._importDictionaries(
+        //     this._arrayToAsyncGenerator(fileArray),
+        //     null,
+        //     null,
+        //     importProgressTracker,
+        // );
     }
 
     /**
@@ -363,6 +366,7 @@ export class DictionaryImportController {
         /** @type {(FileSystemEntry)[]} */
         let readEntries = await new Promise((resolve) => { directoryReader.readEntries(resolve); });
         while (readEntries.length > 0) {
+            // @ts-ignore
             this._importFileDropItemCount += readEntries.length;
             this._validateDirectoryItemCount();
 
@@ -376,6 +380,7 @@ export class DictionaryImportController {
      * @throws
      */
     _validateDirectoryItemCount() {
+        // @ts-ignore
         if (this._importFileDropItemCount > 1000) {
             this._importFileDropItemCount = 0;
             const errorText = 'Directory upload item count too large';
@@ -388,6 +393,7 @@ export class DictionaryImportController {
      * @param {MouseEvent} e
      */
     _onImportButtonClick(e) {
+        // @ts-ignore
         e.preventDefault();
         /** @type {import('./modal.js').Modal} */ (this._importModal).setVisible(true);
     }
@@ -396,6 +402,7 @@ export class DictionaryImportController {
      * @param {MouseEvent} e
      */
     _onPurgeButtonClick(e) {
+        // @ts-ignore
         e.preventDefault();
         /** @type {import('./modal.js').Modal} */ (this._purgeConfirmModal).setVisible(true);
     }
@@ -404,6 +411,7 @@ export class DictionaryImportController {
      * @param {MouseEvent} e
      */
     _onPurgeConfirmButtonClick(e) {
+        // @ts-ignore
         e.preventDefault();
         /** @type {import('./modal.js').Modal} */ (this._purgeConfirmModal).setVisible(false);
         void this._purgeDatabase();
@@ -412,7 +420,8 @@ export class DictionaryImportController {
     /**
      * @param {Event} e
      */
-    async _onImportFileChange(e) {
+    async _onImportFileChange(e) // @ts-ignore
+    {
         /** @type {import('./modal.js').Modal} */ (this._importModal).setVisible(false);
         const node = /** @type {HTMLInputElement} */ (e.currentTarget);
         const {files} = node;
@@ -429,6 +438,7 @@ export class DictionaryImportController {
 
     /** */
     async _onImportFromURL() {
+        // @ts-ignore
         const text = this._importURLText.value.trim();
         if (!text) { return; }
         await this.importFilesFromURLs(text, null, null);
@@ -512,6 +522,7 @@ export class DictionaryImportController {
             this._setModifying(true);
             this._hideErrors();
 
+            // @ts-ignore
             await this._settingsController.application.api.purgeDatabase();
             const errors = await this._clearDictionarySettings();
 
@@ -536,6 +547,7 @@ export class DictionaryImportController {
     async _importDictionaries(dictionaries, profilesDictionarySettings, onImportDone, importProgressTracker) {
         if (this._modifying) { return; }
 
+        // @ts-ignore
         const statusFooter = this._statusFooter;
         const progressSelector = '.dictionary-import-progress';
         const progressContainers = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll(`#dictionaries-modal ${progressSelector}`));
@@ -573,6 +585,7 @@ export class DictionaryImportController {
                         file,
                         profilesDictionarySettings,
                         importDetails,
+                        // @ts-ignore
                         onProgress,
                     ) ?? []),
                 ];
@@ -628,22 +641,23 @@ export class DictionaryImportController {
     }
 
     /**
-     * @param {File} file
+     * @param {string} filePath
      * @param {import('settings-controller').ProfilesDictionarySettings} profilesDictionarySettings
      * @param {import('dictionary-importer').ImportDetails} importDetails
-     * @param {import('dictionary-worker').ImportProgressCallback} onProgress
-     * @returns {Promise<Error[] | undefined>}
+     * @returns {Promise<import('dictionary-worker').MessageCompleteResultSerialized>}
      */
-    async _importDictionaryFromZip(file, profilesDictionarySettings, importDetails, onProgress) {
-        const archiveContent = await this._readFile(file);
-        const {result, errors} = await new DictionaryWorker().importDictionary(archiveContent, importDetails, onProgress);
+    async _importDictionaryFromZip(filePath, profilesDictionarySettings, importDetails) {
+        const archiveContent = await fs.readFile(filePath);
+
+        const {result, errors} = await new DictionaryWorkerHandler()._importDictionary({details: importDetails, archiveContent}, () => {});
         if (!result) {
-            return errors;
+            return {result, errors};
         }
 
         const errors2 = await this._addDictionarySettings(result, profilesDictionarySettings);
 
-        await this._settingsController.application.api.triggerDatabaseUpdated('dictionary', 'import');
+        // @ts-expect-error - Wrong type
+        await this._settingsController._backend._onApiTriggerDatabaseUpdated({type: 'dictionary', cause: 'import'});
 
         // Only runs if updating a dictionary
         if (profilesDictionarySettings !== null) {
@@ -662,11 +676,15 @@ export class DictionaryImportController {
         }
 
         if (errors.length > 0) {
+            // @ts-expect-error - Wrong error
             errors.push(new Error(`Dictionary may not have been imported properly: ${errors.length} error${errors.length === 1 ? '' : 's'} reported.`));
-            this._showErrors([...errors, ...errors2]);
+            // @ts-expect-error - Wrong error
+            return {result, errors: [...errors, ...errors2]};
         } else if (errors2.length > 0) {
-            this._showErrors(errors2);
+            // @ts-expect-error - Wrong error
+            return {result, errors: errors2};
         }
+        return {result, errors};
     }
 
     /**
@@ -779,6 +797,7 @@ export class DictionaryImportController {
             fragment.appendChild(div);
         }
 
+        // @ts-ignore
         const errorContainer = /** @type {HTMLElement} */ (this._errorContainer);
         errorContainer.appendChild(fragment);
         errorContainer.hidden = false;
@@ -786,6 +805,7 @@ export class DictionaryImportController {
 
     /** */
     _hideErrors() {
+        // @ts-ignore
         const errorContainer = /** @type {HTMLElement} */ (this._errorContainer);
         errorContainer.textContent = '';
         errorContainer.hidden = true;
@@ -855,6 +875,7 @@ export class DictionaryImportController {
 
     /** */
     _triggerStorageChanged() {
+        // @ts-ignore
         this._settingsController.application.triggerStorageChanged();
     }
 }

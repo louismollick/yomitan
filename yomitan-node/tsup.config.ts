@@ -28,10 +28,18 @@ export default defineConfig({
     esbuildPlugins: [
         copy({
             resolveFrom: 'cwd',
-            assets: {
+            assets: [{
                 from: ['../ext/templates-display.html'],
-                to: ['./dist'],
+                to: ['./dist/templates-display.html'],
             },
+            {
+                from: ['../ext/data/templates/default-anki-field-templates.handlebars'],
+                to: ['./dist/data/templates/default-anki-field-templates.handlebars'],
+            },
+            {
+                from: ['../ext/data/schemas/options-schema.json'],
+                to: ['./dist/data/schemas/options-schema.json'],
+            }],
         }),
     ],
 });

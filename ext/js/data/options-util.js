@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {promises as fs} from 'fs';
+import path from 'path';
 import {fetchJson, fetchText} from '../core/fetch-utilities.js';
-import {parseJson} from '../core/json.js';
 import {isObjectNotArray} from '../core/object-utilities.js';
 import {escapeRegExp} from '../core/utilities.js';
 import {TemplatePatcher} from '../templates/template-patcher.js';
@@ -116,20 +117,7 @@ export class OptionsUtil {
     async load() {
         let options;
         try {
-            const optionsStr = await new Promise((resolve, reject) => {
-                chrome.storage.local.get(['options'], (store) => {
-                    const error = chrome.runtime.lastError;
-                    if (error) {
-                        reject(new Error(error.message));
-                    } else {
-                        resolve(store.options);
-                    }
-                });
-            });
-            if (typeof optionsStr !== 'string') {
-                throw new Error('Invalid value for options');
-            }
-            options = parseJson(optionsStr);
+            options = await fetchJson('/options.json');
         } catch (e) {
             // NOP
         }
@@ -149,16 +137,12 @@ export class OptionsUtil {
      * @returns {Promise<void>}
      */
     save(options) {
-        return new Promise((resolve, reject) => {
-            chrome.storage.local.set({options: JSON.stringify(options)}, () => {
-                const error = chrome.runtime.lastError;
-                if (error) {
-                    reject(new Error(error.message));
-                } else {
-                    resolve();
-                }
-            });
-        });
+        // Convert options to JSON string with pretty formatting
+        const optionsJson = JSON.stringify(options, null, 2);
+
+        // eslint-disable-next-line unicorn/prefer-module
+        const distDir = import.meta.dirname ?? __dirname; // TODO: figure how to do this cleaner by separating exports for ESM/CJS
+        return fs.writeFile(path.join(distDir, '/options.json'), optionsJson, 'utf8');
     }
 
     /**

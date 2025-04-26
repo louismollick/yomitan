@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {DictionaryDatabase} from '../../../yomitan-node/database/dictionary-database.js';
 import {ExtensionError} from '../core/extension-error.js';
-import {DictionaryDatabase} from './dictionary-database.js';
 import {DictionaryImporter} from './dictionary-importer.js';
 import {DictionaryWorkerMediaLoader} from './dictionary-worker-media-loader.js';
 
@@ -28,57 +28,57 @@ export class DictionaryWorkerHandler {
     }
 
     /** */
-    prepare() {
-        self.addEventListener('message', this._onMessage.bind(this), false);
-    }
+    // prepare() {
+    //     self.addEventListener('message', this._onMessage.bind(this), false);
+    // }
 
     // Private
 
     /**
      * @param {MessageEvent<import('dictionary-worker-handler').Message>} event
      */
-    _onMessage(event) {
-        const {action, params} = event.data;
-        switch (action) {
-            case 'importDictionary':
-                void this._onMessageWithProgress(params, this._importDictionary.bind(this));
-                break;
-            case 'deleteDictionary':
-                void this._onMessageWithProgress(params, this._deleteDictionary.bind(this));
-                break;
-            case 'getDictionaryCounts':
-                void this._onMessageWithProgress(params, this._getDictionaryCounts.bind(this));
-                break;
-            case 'getImageDetails.response':
-                this._mediaLoader.handleMessage(params);
-                break;
-        }
-    }
+    // _onMessage(event) {
+    //     const {action, params} = event.data;
+    //     switch (action) {
+    //         case 'importDictionary':
+    //             void this._onMessageWithProgress(params, this._importDictionary.bind(this));
+    //             break;
+    //         case 'deleteDictionary':
+    //             void this._onMessageWithProgress(params, this._deleteDictionary.bind(this));
+    //             break;
+    //         case 'getDictionaryCounts':
+    //             void this._onMessageWithProgress(params, this._getDictionaryCounts.bind(this));
+    //             break;
+    //         case 'getImageDetails.response':
+    //             this._mediaLoader.handleMessage(params);
+    //             break;
+    //     }
+    // }
 
     /**
      * @template [T=unknown]
      * @param {T} params
      * @param {(details: T, onProgress: import('dictionary-worker-handler').OnProgressCallback) => Promise<unknown>} handler
      */
-    async _onMessageWithProgress(params, handler) {
-        /**
-         * @param {...unknown} args
-         */
-        const onProgress = (...args) => {
-            self.postMessage({
-                action: 'progress',
-                params: {args},
-            });
-        };
-        let response;
-        try {
-            const result = await handler(params, onProgress);
-            response = {result};
-        } catch (e) {
-            response = {error: ExtensionError.serialize(e)};
-        }
-        self.postMessage({action: 'complete', params: response});
-    }
+    // async _onMessageWithProgress(params, handler) {
+    //     /**
+    //      * @param {...unknown} args
+    //      */
+    //     const onProgress = (...args) => {
+    //         self.postMessage({
+    //             action: 'progress',
+    //             params: {args},
+    //         });
+    //     };
+    //     let response;
+    //     try {
+    //         const result = await handler(params, onProgress);
+    //         response = {result};
+    //     } catch (e) {
+    //         response = {error: ExtensionError.serialize(e)};
+    //     }
+    //     self.postMessage({action: 'complete', params: response});
+    // }
 
     /**
      * @param {import('dictionary-worker-handler').ImportDictionaryMessageParams} details
@@ -107,6 +107,7 @@ export class DictionaryWorkerHandler {
     async _deleteDictionary({dictionaryTitle}, onProgress) {
         const dictionaryDatabase = await this._getPreparedDictionaryDatabase();
         try {
+            // @ts-expect-error - DB doesn't have all fields
             return await dictionaryDatabase.deleteDictionary(dictionaryTitle, 1000, onProgress);
         } finally {
             void dictionaryDatabase.close();

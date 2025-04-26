@@ -41,6 +41,7 @@ import type {
 } from '../../types/ext/dictionary-database.js';
 import type {Summary} from '../../types/ext/dictionary-importer.js';
 import type {TermGlossary} from '../../types/ext/dictionary-data.js';
+import type {TagTargetItem} from 'types/ext/translator.js';
 
 // Main DictionaryDatabase class
 export class DictionaryDatabase {
@@ -130,6 +131,7 @@ export class DictionaryDatabase {
         dictionaries: DictionarySet,
         matchType: MatchType = 'exact',
     ): Promise<TermEntry[]> {
+        console.log('findTermsBulk', termList, dictionaries, matchType);
         if (termList.length === 0) {
             return [];
         }
@@ -301,6 +303,7 @@ export class DictionaryDatabase {
         termList: string[],
         dictionaries: DictionarySet,
     ): Promise<TermMeta[]> {
+        console.log('findTermMetaBulk', termList, dictionaries);
         if (termList.length === 0) {
             return [];
         }
@@ -373,12 +376,13 @@ export class DictionaryDatabase {
 
     /**
      * Find tag meta data in bulk
-     * @param {{name: string, dictionary: string}[]} tagList List of tag names and dictionaries to search for
+     * @param {TagTargetItem[]} tagList List of tag names and dictionaries to search for
      * @returns {Promise<Tag[]>} Array of matching tag meta entries
      */
     async findTagMetaBulk(
-        tagList: {name: string, dictionary: string}[],
+        tagList: TagTargetItem[],
     ): Promise<Tag[]> {
+        console.log('findTagMetaBulk', tagList);
         if (tagList.length === 0) {
             return [];
         }
@@ -387,7 +391,7 @@ export class DictionaryDatabase {
         const db = this._db.getDb();
 
         for (let i = 0; i < tagList.length; i++) {
-            const {name, dictionary} = tagList[i]!;
+            const {tagName: name, dictionary} = tagList[i]!;
 
             const rows = await db.select().from(schema.tagMeta)
                 .where(and(

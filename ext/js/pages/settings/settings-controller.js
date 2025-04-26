@@ -16,41 +16,37 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventDispatcher} from '../../core/event-dispatcher.js';
-import {EventListenerCollection} from '../../core/event-listener-collection.js';
-import {isObjectNotArray} from '../../core/object-utilities.js';
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable no-underscore-dangle */
+
 import {generateId} from '../../core/utilities.js';
 import {OptionsUtil} from '../../data/options-util.js';
-import {getAllPermissions} from '../../data/permissions-util.js';
-import {HtmlTemplateCollection} from '../../dom/html-template-collection.js';
 
-/**
- * @augments EventDispatcher<import('settings-controller').Events>
- */
-export class SettingsController extends EventDispatcher {
+export class SettingsController {
     /**
-     * @param {import('../../application.js').Application} application
+     * Create Settings Controler
+     * @param {import('../../background/backend.js').Backend} backend
      */
-    constructor(application) {
-        super();
-        /** @type {import('../../application.js').Application} */
-        this._application = application;
+    constructor(backend) {
+        // super();
+        /** @type {import('../../background/backend.js').Backend} */
+        this._backend = backend;
         /** @type {number} */
         this._profileIndex = 0;
         /** @type {string} */
         this._source = generateId(16);
-        /** @type {Set<import('settings-controller').PageExitPrevention>} */
-        this._pageExitPreventions = new Set();
-        /** @type {EventListenerCollection} */
-        this._pageExitPreventionEventListeners = new EventListenerCollection();
-        /** @type {HtmlTemplateCollection} */
-        this._templates = new HtmlTemplateCollection();
+        // /** @type {Set<import('settings-controller').PageExitPrevention>} */
+        // this._pageExitPreventions = new Set();
+        // /** @type {EventListenerCollection} */
+        // this._pageExitPreventionEventListeners = new EventListenerCollection();
+        // /** @type {HtmlTemplateCollection} */
+        // this._templates = new HtmlTemplateCollection();
     }
 
-    /** @type {import('../../application.js').Application} */
-    get application() {
-        return this._application;
-    }
+    // /** @type {import('../../application.js').Application} */
+    // get application() {
+    //     return this._application;
+    // }
 
     /** @type {string} */
     get source() {
@@ -72,19 +68,19 @@ export class SettingsController extends EventDispatcher {
         this._setProfileIndex(this._profileIndex, true);
     }
 
-    /** @type {HtmlTemplateCollection} */
-    get templates() {
-        return this._templates;
-    }
+    // /** @type {HtmlTemplateCollection} */
+    // get templates() {
+    //     return this._templates;
+    // }
 
     /** */
     async prepare() {
-        await this._templates.loadFromFiles(['/templates-settings.html']);
-        this._application.on('optionsUpdated', this._onOptionsUpdated.bind(this));
-        if (this._canObservePermissionsChanges()) {
-            chrome.permissions.onAdded.addListener(this._onPermissionsChanged.bind(this));
-            chrome.permissions.onRemoved.addListener(this._onPermissionsChanged.bind(this));
-        }
+        // await this._templates.loadFromFiles(['/templates-settings.html']);
+        // this._application.on('optionsUpdated', this._onOptionsUpdated.bind(this));
+        // if (this._canObservePermissionsChanges()) {
+        //     chrome.permissions.onAdded.addListener(this._onPermissionsChanged.bind(this));
+        //     chrome.permissions.onRemoved.addListener(this._onPermissionsChanged.bind(this));
+        // }
         const optionsFull = await this.getOptionsFull();
         const {profiles, profileCurrent} = optionsFull;
         if (profileCurrent >= 0 && profileCurrent < profiles.length) {
@@ -102,14 +98,16 @@ export class SettingsController extends EventDispatcher {
      */
     async getOptions() {
         const optionsContext = this.getOptionsContext();
-        return await this._application.api.optionsGet(optionsContext);
+        // @ts-expect-error - Wrong type
+        return this._backend._onApiOptionsGet({optionsContext});
     }
 
     /**
      * @returns {Promise<import('settings').Options>}
      */
     async getOptionsFull() {
-        return await this._application.api.optionsGetFull();
+        // @ts-expect-error - Wrong type
+        return this._backend._onApiOptionsGetFull();
     }
 
     /**
@@ -117,7 +115,8 @@ export class SettingsController extends EventDispatcher {
      */
     async setAllSettings(value) {
         const profileIndex = value.profileCurrent;
-        await this._application.api.setAllSettings(value, this._source);
+        // @ts-expect-error - Wrong type
+        await this._backend._onApiSetAllSettings({value, source: this._source});
         this._setProfileIndex(profileIndex, true);
     }
 
@@ -191,7 +190,8 @@ export class SettingsController extends EventDispatcher {
      * @returns {Promise<import('dictionary-importer').Summary[]>}
      */
     async getDictionaryInfo() {
-        return await this._application.api.getDictionaryInfo();
+        // @ts-expect-error - Wrong type
+        return await this._backend._onApiGetDictionaryInfo();
     }
 
     /**
@@ -206,31 +206,31 @@ export class SettingsController extends EventDispatcher {
      */
     preventPageExit() {
         /** @type {import('settings-controller').PageExitPrevention} */
-        // eslint-disable-next-line sonarjs/prefer-object-literal
-        const obj = {};
-        obj.end = this._endPreventPageExit.bind(this, obj);
-        if (this._pageExitPreventionEventListeners.size === 0) {
-            this._pageExitPreventionEventListeners.addEventListener(window, 'beforeunload', this._onBeforeUnload.bind(this), false);
-        }
-        this._pageExitPreventions.add(obj);
-        return obj;
+
+        // const obj = {};
+        // obj.end = this._endPreventPageExit.bind(this, obj);
+        // if (this._pageExitPreventionEventListeners.size === 0) {
+        //     this._pageExitPreventionEventListeners.addEventListener(window, 'beforeunload', this._onBeforeUnload.bind(this), false);
+        // }
+        // this._pageExitPreventions.add(obj);
+        return {end: () => {}};
     }
 
-    /**
-     * @param {string} name
-     * @returns {Element}
-     */
-    instantiateTemplate(name) {
-        return this._templates.instantiate(name);
-    }
+    // /**
+    //  * @param {string} name
+    //  * @returns {Element}
+    //  */
+    // instantiateTemplate(name) {
+    //     return this._templates.instantiate(name);
+    // }
 
-    /**
-     * @param {string} name
-     * @returns {DocumentFragment}
-     */
-    instantiateTemplateFragment(name) {
-        return this._templates.instantiateFragment(name);
-    }
+    // /**
+    //  * @param {string} name
+    //  * @returns {DocumentFragment}
+    //  */
+    // instantiateTemplateFragment(name) {
+    //     return this._templates.instantiateFragment(name);
+    // }
 
     /**
      * @returns {Promise<import('settings').Options>}
@@ -249,7 +249,7 @@ export class SettingsController extends EventDispatcher {
      */
     _setProfileIndex(value, canUpdateProfileIndex) {
         this._profileIndex = value;
-        this.trigger('optionsContextChanged', {});
+        // this.trigger('optionsContextChanged', {});
         void this._onOptionsUpdatedInternal(canUpdateProfileIndex);
     }
 
@@ -268,7 +268,9 @@ export class SettingsController extends EventDispatcher {
         const optionsContext = this.getOptionsContext();
         try {
             const options = await this.getOptions();
-            this.trigger('optionsChanged', {options, optionsContext});
+            // eslint-disable-next-line no-console
+            console.log('_onOptionsUpdatedInternal', options, optionsContext);
+            // this.trigger('optionsChanged', {options, optionsContext});
         } catch (e) {
             if (canUpdateProfileIndex) {
                 this._setProfileIndex(0, false);
@@ -299,7 +301,8 @@ export class SettingsController extends EventDispatcher {
             this._modifyOptionsScope(target2);
             return target2;
         });
-        return await this._application.api.getSettings(targets2);
+        // @ts-expect-error - Wrong type
+        return this._backend._onApiGetSettings({targets: targets2});
     }
 
     /**
@@ -314,32 +317,33 @@ export class SettingsController extends EventDispatcher {
             this._modifyOptionsScope(target2);
             return target2;
         });
-        return await this._application.api.modifySettings(targets2, this._source);
+        // @ts-expect-error - Wrong type
+        return this._backend._onApiModifySettings({targets: targets2, source: this._source});
     }
 
-    /**
-     * @param {BeforeUnloadEvent} e
-     * @returns {string|undefined}
-     */
-    _onBeforeUnload(e) {
-        if (this._pageExitPreventions.size === 0) {
-            return;
-        }
+    // /**
+    //  * @param {BeforeUnloadEvent} e
+    //  * @returns {string|undefined}
+    //  */
+    // _onBeforeUnload(e) {
+    //     if (this._pageExitPreventions.size === 0) {
+    //         return;
+    //     }
 
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-    }
+    //     e.preventDefault();
+    //     e.returnValue = '';
+    //     return '';
+    // }
 
-    /**
-     * @param {import('settings-controller').PageExitPrevention} obj
-     */
-    _endPreventPageExit(obj) {
-        this._pageExitPreventions.delete(obj);
-        if (this._pageExitPreventions.size === 0) {
-            this._pageExitPreventionEventListeners.removeAllEventListeners();
-        }
-    }
+    // /**
+    //  * @param {import('settings-controller').PageExitPrevention} obj
+    //  */
+    // _endPreventPageExit(obj) {
+    //     this._pageExitPreventions.delete(obj);
+    //     if (this._pageExitPreventions.size === 0) {
+    //         this._pageExitPreventionEventListeners.removeAllEventListeners();
+    //     }
+    // }
 
     /** */
     _onPermissionsChanged() {
@@ -348,17 +352,18 @@ export class SettingsController extends EventDispatcher {
 
     /** */
     async _triggerPermissionsChanged() {
-        const eventName = 'permissionsChanged';
-        if (!this.hasListeners(eventName)) { return; }
+        // const eventName = 'permissionsChanged';
+        // if (!this.hasListeners(eventName)) { return; }
 
-        const permissions = await getAllPermissions();
-        this.trigger(eventName, {permissions});
+        // const permissions = await getAllPermissions();
+        // this.trigger(eventName, {permissions});
     }
 
     /**
      * @returns {boolean}
      */
     _canObservePermissionsChanges() {
-        return isObjectNotArray(chrome.permissions) && isObjectNotArray(chrome.permissions.onAdded) && isObjectNotArray(chrome.permissions.onRemoved);
+        return false;
+        // return isObjectNotArray(chrome.permissions) && isObjectNotArray(chrome.permissions.onAdded) && isObjectNotArray(chrome.permissions.onRemoved);
     }
 }

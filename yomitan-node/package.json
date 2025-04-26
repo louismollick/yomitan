@@ -15,7 +15,7 @@
         "lint": "tsc",
         "test:mjs": "tsx test-mjs.ts",
         "test:cjs": "tsx test-cjs.ts",
-        "cli": "tsx cli.ts"
+        "cli": "node ./dist/cli.js"
     },
     "dependencies": {
         "@libsql/client": "^0.15.4",

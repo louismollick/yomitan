@@ -17,13 +17,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable no-underscore-dangle */
+
 import {Command} from 'commander';
-import fs from 'fs';
-import path from 'path';
-import {DictionaryDatabase} from './database/dictionary-database.js';
-import {DictionaryImporter} from '../ext/js/dictionary/dictionary-importer.js';
-import {SimpleMediaLoader} from './index.js';
-import type {ImportResult} from '../types/ext/dictionary-importer.js';
+import {Backend} from 'ext/js/background/backend.js';
+import {SettingsController} from 'ext/js/pages/settings/settings-controller.js';
+import {DictionaryImportController} from 'ext/js/pages/settings/dictionary-import-controller.js';
+import type {MessageCompleteResultSerialized} from 'types/ext/dictionary-worker.js';
 
 // Create a new command instance
 const program = new Command();
@@ -41,46 +42,17 @@ program
     .argument('<zipPath>', 'Path to the dictionary zip file')
     .action(async (zipPath: string) => {
         try {
-            // Resolve the path to the zip file
-            const resolvedZipPath = path.resolve(process.cwd(), zipPath);
-
-            // Check if the file exists
-            if (!fs.existsSync(resolvedZipPath)) {
-                console.error(`Dictionary zip file not found: ${resolvedZipPath}`);
-                process.exit(1);
-            }
-
-            console.log(`Importing dictionary from ${resolvedZipPath}...`);
-
-            // Initialize the dictionary database
-            console.log('Initializing dictionary database...');
-            const dictionaryDatabase = new DictionaryDatabase();
-            await dictionaryDatabase.prepare();
-            console.log('Dictionary database initialized');
-
-            // Read the zip file content
-            const zipFileContent = fs.readFileSync(resolvedZipPath);
-
-            // Create a media loader and dictionary importer
-            const mediaLoader = new SimpleMediaLoader();
-            const dictionaryImporter = new DictionaryImporter(mediaLoader);
-
-            // Import the dictionary
-            const importResult = await dictionaryImporter.importDictionary(
-                // @ts-expect-error - The Sqlite DictionaryDatabase is missing some unimportant properties
-                dictionaryDatabase,
-                zipFileContent.buffer,
-                {
-                    prefixWildcardsSupported: true,
-                    yomitanVersion: '0.0.0.0',
-                },
-            ) as ImportResult;
-
+            const backend = new Backend();
+            await backend.prepare();
+            const settingsController = new SettingsController(backend);
+            await settingsController.prepare();
+            const dictionaryImportController = new DictionaryImportController(settingsController);
+            const importResult = await dictionaryImportController._importDictionaryFromZip(zipPath, null, {prefixWildcardsSupported: true, yomitanVersion: '0.0.0.0'}) as MessageCompleteResultSerialized;
             // Handle import results
             if (importResult.errors && importResult.errors.length > 0) {
                 console.error('Errors during dictionary import:');
                 for (const err of importResult.errors) {
-                    console.error(`- ${err.message}`);
+                    console.error(`- ${JSON.stringify(err)}`);
                 }
                 process.exit(1);
             }
@@ -89,9 +61,6 @@ program
                 const dictionaryName = importResult.result.title;
                 console.log(`Dictionary imported successfully: ${dictionaryName}`);
             }
-
-            // Close the database connection
-            await dictionaryDatabase.close();
         } catch (error: unknown) {
             console.error('Error during dictionary import:', error instanceof Error ? error.message : error);
             process.exit(1);

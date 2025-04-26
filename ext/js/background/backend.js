@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+import {DictionaryDatabase} from '../../../yomitan-node/database/dictionary-database.js';
 import {AccessibilityController} from '../accessibility/accessibility-controller.js';
 import {AnkiConnect} from '../comm/anki-connect.js';
 import {ClipboardMonitor} from '../comm/clipboard-monitor.js';
@@ -28,11 +29,8 @@ import {log} from '../core/log.js';
 import {isObjectNotArray} from '../core/object-utilities.js';
 import {clone, deferPromise, promiseTimeout} from '../core/utilities.js';
 import {INVALID_NOTE_ID, isNoteDataValid} from '../data/anki-util.js';
-import {arrayBufferToBase64} from '../data/array-buffer-util.js';
 import {OptionsUtil} from '../data/options-util.js';
 import {getAllPermissions, hasPermissions, hasRequiredPermissionsForOptions} from '../data/permissions-util.js';
-import {DictionaryDatabase} from '../dictionary/dictionary-database.js';
-import {Environment} from '../extension/environment.js';
 import {ObjectPropertyAccessor} from '../general/object-property-accessor.js';
 import {distributeFuriganaInflected, isCodePointJapanese, convertKatakanaToHiragana as jpConvertKatakanaToHiragana} from '../language/ja/japanese.js';
 import {getLanguageSummaries, isTextLookupWorthy} from '../language/languages.js';
@@ -50,41 +48,42 @@ import {injectStylesheet} from './script-manager.js';
  */
 export class Backend {
     /**
-     * @param {import('../extension/web-extension.js').WebExtension} webExtension
+     * Create Backend
      */
-    constructor(webExtension) {
-        /** @type {import('../extension/web-extension.js').WebExtension} */
-        this._webExtension = webExtension;
-        /** @type {Environment} */
-        this._environment = new Environment();
+    constructor() {
+        // /** @type {import('../extension/web-extension.js').WebExtension} */
+        // this._webExtension = webExtension;
+        // /** @type {Environment} */
+        // this._environment = new Environment();
         /** @type {AnkiConnect} */
         this._anki = new AnkiConnect();
         /** @type {Mecab} */
         this._mecab = new Mecab();
 
-        if (!chrome.offscreen) {
-            /** @type {?OffscreenProxy} */
-            this._offscreen = null;
-            /** @type {DictionaryDatabase|DictionaryDatabaseProxy} */
-            this._dictionaryDatabase = new DictionaryDatabase();
-            /** @type {Translator|TranslatorProxy} */
-            this._translator = new Translator(this._dictionaryDatabase);
-            /** @type {ClipboardReader|ClipboardReaderProxy} */
-            this._clipboardReader = new ClipboardReader(
-                (typeof document === 'object' && document !== null ? document : null),
-                '#clipboard-paste-target',
-                '#clipboard-rich-content-paste-target',
-            );
-        } else {
-            /** @type {?OffscreenProxy} */
-            this._offscreen = new OffscreenProxy(webExtension);
-            /** @type {DictionaryDatabase|DictionaryDatabaseProxy} */
-            this._dictionaryDatabase = new DictionaryDatabaseProxy(this._offscreen);
-            /** @type {Translator|TranslatorProxy} */
-            this._translator = new TranslatorProxy(this._offscreen);
-            /** @type {ClipboardReader|ClipboardReaderProxy} */
-            this._clipboardReader = new ClipboardReaderProxy(this._offscreen);
-        }
+        // if (!chrome.offscreen) {
+        /** @type {?OffscreenProxy} */
+        this._offscreen = null;
+        /** @type {DictionaryDatabase|DictionaryDatabaseProxy} */
+        this._dictionaryDatabase = new DictionaryDatabase();
+        /** @type {Translator|TranslatorProxy} */
+        // @ts-expect-error - Missing fields for Dict DB
+        this._translator = new Translator(this._dictionaryDatabase);
+        /** @type {ClipboardReader|ClipboardReaderProxy} */
+        this._clipboardReader = new ClipboardReader(
+            (typeof document === 'object' && document !== null ? document : null),
+            '#clipboard-paste-target',
+            '#clipboard-rich-content-paste-target',
+        );
+        // } else {
+        //     /** @type {?OffscreenProxy} */
+        //     this._offscreen = new OffscreenProxy(webExtension);
+        //     /** @type {DictionaryDatabase|DictionaryDatabaseProxy} */
+        //     this._dictionaryDatabase = new DictionaryDatabaseProxy(this._offscreen);
+        //     /** @type {Translator|TranslatorProxy} */
+        //     this._translator = new TranslatorProxy(this._offscreen);
+        //     /** @type {ClipboardReader|ClipboardReaderProxy} */
+        //     this._clipboardReader = new ClipboardReaderProxy(this._offscreen);
+        // }
 
         /** @type {ClipboardMonitor} */
         this._clipboardMonitor = new ClipboardMonitor(this._clipboardReader);
@@ -232,36 +231,36 @@ export class Backend {
      * @returns {void}
      */
     _prepareInternalSync() {
-        if (isObjectNotArray(chrome.commands) && isObjectNotArray(chrome.commands.onCommand)) {
-            const onCommand = this._onWebExtensionEventWrapper(this._onCommand.bind(this));
-            chrome.commands.onCommand.addListener(onCommand);
-        }
+        // if (isObjectNotArray(chrome.commands) && isObjectNotArray(chrome.commands.onCommand)) {
+        //     const onCommand = this._onWebExtensionEventWrapper(this._onCommand.bind(this));
+        //     chrome.commands.onCommand.addListener(onCommand);
+        // }
 
-        if (isObjectNotArray(chrome.tabs) && isObjectNotArray(chrome.tabs.onZoomChange)) {
-            const onZoomChange = this._onWebExtensionEventWrapper(this._onZoomChange.bind(this));
-            chrome.tabs.onZoomChange.addListener(onZoomChange);
-        }
+        // if (isObjectNotArray(chrome.tabs) && isObjectNotArray(chrome.tabs.onZoomChange)) {
+        //     const onZoomChange = this._onWebExtensionEventWrapper(this._onZoomChange.bind(this));
+        //     chrome.tabs.onZoomChange.addListener(onZoomChange);
+        // }
 
-        const onMessage = this._onMessageWrapper.bind(this);
-        chrome.runtime.onMessage.addListener(onMessage);
+        // const onMessage = this._onMessageWrapper.bind(this);
+        // chrome.runtime.onMessage.addListener(onMessage);
 
-        // On Chrome, this is for receiving messages sent with navigator.serviceWorker, which has the benefit of being able to transfer objects, but doesn't accept callbacks
-        (/** @type {ServiceWorkerGlobalScope & typeof globalThis} */ (globalThis)).addEventListener('message', this._onPmMessage.bind(this));
+        // // On Chrome, this is for receiving messages sent with navigator.serviceWorker, which has the benefit of being able to transfer objects, but doesn't accept callbacks
+        // (/** @type {ServiceWorkerGlobalScope & typeof globalThis} */ (globalThis)).addEventListener('message', this._onPmMessage.bind(this));
 
-        if (this._canObservePermissionsChanges()) {
-            const onPermissionsChanged = this._onWebExtensionEventWrapper(this._onPermissionsChanged.bind(this));
-            chrome.permissions.onAdded.addListener(onPermissionsChanged);
-            chrome.permissions.onRemoved.addListener(onPermissionsChanged);
-        }
+        // if (this._canObservePermissionsChanges()) {
+        //     const onPermissionsChanged = this._onWebExtensionEventWrapper(this._onPermissionsChanged.bind(this));
+        //     chrome.permissions.onAdded.addListener(onPermissionsChanged);
+        //     chrome.permissions.onRemoved.addListener(onPermissionsChanged);
+        // }
 
-        chrome.runtime.onInstalled.addListener(this._onInstalled.bind(this));
+        // chrome.runtime.onInstalled.addListener(this._onInstalled.bind(this));
     }
 
     /** @type {import('api').PmApiHandler<'connectToDatabaseWorker'>} */
     async _onPmConnectToDatabaseWorker(_params, ports) {
-        if (ports !== null && ports.length > 0) {
-            await this._dictionaryDatabase.connectToDatabaseWorker(ports[0]);
-        }
+    // if (ports !== null && ports.length > 0) {
+    //     await this._dictionaryDatabase.connectToDatabaseWorker(ports[0]);
+    // }
     }
 
     /** @type {import('api').PmApiHandler<'registerOffscreenPort'>} */
@@ -278,33 +277,33 @@ export class Backend {
         try {
             this._prepareInternalSync();
 
-            this._permissions = await getAllPermissions();
-            this._defaultBrowserActionTitle = this._getBrowserIconTitle();
-            this._badgePrepareDelayTimer = setTimeout(() => {
-                this._badgePrepareDelayTimer = null;
-                this._updateBadge();
-            }, 1000);
-            this._updateBadge();
+            // this._permissions = await getAllPermissions();
+            // this._defaultBrowserActionTitle = this._getBrowserIconTitle();
+            // this._badgePrepareDelayTimer = setTimeout(() => {
+            //     this._badgePrepareDelayTimer = null;
+            //     this._updateBadge();
+            // }, 1000);
+            // this._updateBadge();
 
-            log.on('logGenericError', this._onLogGenericError.bind(this));
+            // log.on('logGenericError', this._onLogGenericError.bind(this));
 
-            await this._requestBuilder.prepare();
-            await this._environment.prepare();
-            if (this._offscreen !== null) {
-                await this._offscreen.prepare();
-            }
-            this._clipboardReader.browser = this._environment.getInfo().browser;
+            // await this._requestBuilder.prepare();
+            // await this._environment.prepare();
+            // if (this._offscreen !== null) {
+            //     await this._offscreen.prepare();
+            // }
+            // this._clipboardReader.browser = this._environment.getInfo().browser;
 
             // if this is Firefox and therefore not running in Service Worker, we need to use a SharedWorker to setup a MessageChannel to postMessage with the popup
-            if (self.constructor.name === 'Window') {
-                const sharedWorkerBridge = new SharedWorker(new URL('../comm/shared-worker-bridge.js', import.meta.url), {type: 'module'});
-                sharedWorkerBridge.port.postMessage({action: 'registerBackendPort'});
-                sharedWorkerBridge.port.addEventListener('message', (/** @type {MessageEvent} */ e) => {
-                    // connectToBackend2
-                    e.ports[0].onmessage = this._onPmMessage.bind(this);
-                });
-                sharedWorkerBridge.port.start();
-            }
+            // if (self.constructor.name === 'Window') {
+            //     const sharedWorkerBridge = new SharedWorker(new URL('../comm/shared-worker-bridge.js', import.meta.url), {type: 'module'});
+            //     sharedWorkerBridge.port.postMessage({action: 'registerBackendPort'});
+            //     sharedWorkerBridge.port.addEventListener('message', (/** @type {MessageEvent} */ e) => {
+            //         // connectToBackend2
+            //         e.ports[0].onmessage = this._onPmMessage.bind(this);
+            //     });
+            //     sharedWorkerBridge.port.start();
+            // }
             try {
                 await this._dictionaryDatabase.prepare();
             } catch (e) {
@@ -319,15 +318,15 @@ export class Backend {
 
             this._applyOptions('background');
 
-            const options = this._getProfileOptions({current: true}, false);
-            if (options.general.showGuide) {
-                void this._openWelcomeGuidePageOnce();
-            }
+            // const options = this._getProfileOptions({current: true}, false);
+            // if (options.general.showGuide) {
+            //     void this._openWelcomeGuidePageOnce();
+            // }
 
-            this._clipboardMonitor.on('change', this._onClipboardTextChange.bind(this));
+            // this._clipboardMonitor.on('change', this._onClipboardTextChange.bind(this));
 
-            this._sendMessageAllTabsIgnoreResponse({action: 'applicationBackendReady'});
-            this._sendMessageIgnoreResponse({action: 'applicationBackendReady'});
+            // this._sendMessageAllTabsIgnoreResponse({action: 'applicationBackendReady'});
+            // this._sendMessageIgnoreResponse({action: 'applicationBackendReady'});
         } catch (e) {
             log.error(e);
             throw e;
@@ -816,7 +815,11 @@ export class Backend {
 
     /** @type {import('api').ApiHandler<'getEnvironmentInfo'>} */
     _onApiGetEnvironmentInfo() {
-        return this._environment.getInfo();
+        return {
+            browser: 'chrome',
+            platform: {os: 'linux'},
+        };
+        // return this._environment.getInfo();
     }
 
     /** @type {import('api').ApiHandler<'clipboardGet'>} */
@@ -1370,8 +1373,10 @@ export class Backend {
      * @param {string} source
      */
     _applyOptions(source) {
+        // eslint-disable-next-line no-console
+        console.log('_applyOptions', source);
         const options = this._getProfileOptions({current: true}, false);
-        this._updateBadge();
+        // this._updateBadge();
 
         const enabled = options.general.enable;
 
@@ -1390,13 +1395,13 @@ export class Backend {
             this._clipboardMonitor.stop();
         }
 
-        this._setupContextMenu(options);
+        // this._setupContextMenu(options);
 
-        this._attachOmniboxListener();
+        // this._attachOmniboxListener();
 
         void this._accessibilityController.update(this._getOptionsFull(false));
 
-        this._sendMessageAllTabsIgnoreResponse({action: 'applicationOptionsUpdated', params: {source}});
+        // this._sendMessageAllTabsIgnoreResponse({action: 'applicationOptionsUpdated', params: {source}});
     }
 
     /**
@@ -2061,7 +2066,9 @@ export class Backend {
      * @param {import('application').ApiMessage<TName>} message
      */
     _sendMessageIgnoreResponse(message) {
-        this._webExtension.sendMessageIgnoreResponse(message);
+        // eslint-disable-next-line no-console
+        console.log('sendMessageIgnoreResponse', message);
+        // this._webExtension.sendMessageIgnoreResponse(message);
     }
 
     /**
@@ -2538,8 +2545,10 @@ export class Backend {
      * @param {import('backend').DatabaseUpdateCause} cause
      */
     _triggerDatabaseUpdated(type, cause) {
+        // eslint-disable-next-line no-console
+        console.log('triggerDatabaseUpdated', type, cause);
         void this._translator.clearDatabaseCaches();
-        this._sendMessageAllTabsIgnoreResponse({action: 'applicationDatabaseUpdated', params: {type, cause}});
+        // this._sendMessageAllTabsIgnoreResponse({action: 'applicationDatabaseUpdated', params: {type, cause}});
     }
 
     /**
@@ -2669,56 +2678,59 @@ export class Backend {
      * @returns {Promise<void>}
      */
     async _openWelcomeGuidePageOnce() {
-        const result = await chrome.storage.session.get(['openedWelcomePage']);
-        if (!result.openedWelcomePage) {
-            await Promise.all([
-                this._openWelcomeGuidePage(),
-                chrome.storage.session.set({openedWelcomePage: true}),
-            ]);
-        }
+        // const result = await chrome.storage.session.get(['openedWelcomePage']);
+        // if (!result.openedWelcomePage) {
+        //     await Promise.all([
+        //         this._openWelcomeGuidePage(),
+        //         chrome.storage.session.set({openedWelcomePage: true}),
+        //     ]);
+        // }
     }
 
     /**
      * @returns {Promise<void>}
      */
     async _openWelcomeGuidePage() {
-        await this._createTab(chrome.runtime.getURL('/welcome.html'));
+        // await this._createTab(chrome.runtime.getURL('/welcome.html'));
     }
 
     /**
      * @returns {Promise<void>}
      */
     async _openInfoPage() {
-        await this._createTab(chrome.runtime.getURL('/info.html'));
+        // await this._createTab(chrome.runtime.getURL('/info.html'));
     }
 
     /**
      * @param {import('backend').Mode} mode
      */
     async _openSettingsPage(mode) {
-        const manifest = chrome.runtime.getManifest();
-        const optionsUI = manifest.options_ui;
-        if (typeof optionsUI === 'undefined') { throw new Error('Failed to find options_ui'); }
-        const {page} = optionsUI;
-        if (typeof page === 'undefined') { throw new Error('Failed to find options_ui.page'); }
-        const url = chrome.runtime.getURL(page);
-        switch (mode) {
-            case 'existingOrNewTab':
-                await /** @type {Promise<void>} */ (new Promise((resolve, reject) => {
-                    chrome.runtime.openOptionsPage(() => {
-                        const e = chrome.runtime.lastError;
-                        if (e) {
-                            reject(new Error(e.message));
-                        } else {
-                            resolve();
-                        }
-                    });
-                }));
-                break;
-            case 'newTab':
-                await this._createTab(url);
-                break;
-        }
+        // eslint-disable-next-line no-console
+        console.log('openSettingsPage', mode);
+
+        // const manifest = chrome.runtime.getManifest();
+        // const optionsUI = manifest.options_ui;
+        // if (typeof optionsUI === 'undefined') { throw new Error('Failed to find options_ui'); }
+        // const {page} = optionsUI;
+        // if (typeof page === 'undefined') { throw new Error('Failed to find options_ui.page'); }
+        // const url = chrome.runtime.getURL(page);
+        // switch (mode) {
+        //     case 'existingOrNewTab':
+        //         await /** @type {Promise<void>} */ (new Promise((resolve, reject) => {
+        //             chrome.runtime.openOptionsPage(() => {
+        //                 const e = chrome.runtime.lastError;
+        //                 if (e) {
+        //                     reject(new Error(e.message));
+        //                 } else {
+        //                     resolve();
+        //                 }
+        //             });
+        //         }));
+        //         break;
+        //     case 'newTab':
+        //         await this._createTab(url);
+        //         break;
+        // }
     }
 
     /**
@@ -2743,19 +2755,20 @@ export class Backend {
      * @returns {Promise<chrome.tabs.Tab>}
      */
     _getTabById(tabId) {
-        return new Promise((resolve, reject) => {
-            chrome.tabs.get(
-                tabId,
-                (result) => {
-                    const e = chrome.runtime.lastError;
-                    if (e) {
-                        reject(new Error(e.message));
-                    } else {
-                        resolve(result);
-                    }
-                },
-            );
-        });
+        return /** @type {Promise<chrome.tabs.Tab>} */ (Promise.resolve({id: tabId}));
+        // return new Promise((resolve, reject) => {
+        //     chrome.tabs.get(
+        //         tabId,
+        //         (result) => {
+        //             const e = chrome.runtime.lastError;
+        //             if (e) {
+        //                 reject(new Error(e.message));
+        //             } else {
+        //                 resolve(result);
+        //             }
+        //         },
+        //     );
+        // });
     }
 
     /**
@@ -2811,13 +2824,13 @@ export class Backend {
      * @returns {Promise<import('dictionary-database').MediaDataStringContent[]>}
      */
     async _getNormalizedDictionaryDatabaseMedia(targets) {
-        const results = [];
-        for (const item of await this._dictionaryDatabase.getMedia(targets)) {
-            const {content, dictionary, height, mediaType, path, width} = item;
-            const content2 = arrayBufferToBase64(content);
-            results.push({content: content2, dictionary, height, mediaType, path, width});
-        }
-        return results;
+        // const results = [];
+        // for (const item of await this._dictionaryDatabase.getMedia(targets)) {
+        //     const {content, dictionary, height, mediaType, path, width} = item;
+        //     const content2 = arrayBufferToBase64(content);
+        //     results.push({content: content2, dictionary, height, mediaType, path, width});
+        // }
+        return [];
     }
 
     /**

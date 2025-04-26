@@ -29,10 +29,10 @@ import {isCodePointChinese} from './zh/chinese.js';
  */
 export class Translator {
     /**
-     * @param {import('../dictionary/dictionary-database.js').DictionaryDatabase} database
+     * @param {import('../../../yomitan-node/database/dictionary-database.js').DictionaryDatabase} database
      */
     constructor(database) {
-        /** @type {import('../dictionary/dictionary-database.js').DictionaryDatabase} */
+        /** @type {import('../../../yomitan-node/database/dictionary-database.js').DictionaryDatabase} */
         this._database = database;
         /** @type {MultiLanguageTransformer} */
         this._multiLanguageTransformer = new MultiLanguageTransformer();
@@ -77,6 +77,8 @@ export class Translator {
      * @returns {Promise<{dictionaryEntries: import('dictionary').TermDictionaryEntry[], originalTextLength: number}>} An object containing dictionary entries and the length of the original source text.
      */
     async findTerms(mode, text, options) {
+        // eslint-disable-next-line no-console
+        console.log('findTerms', mode, text, options);
         safePerformance.mark('translator:findTerms:start');
         const {enabledDictionaryMap, excludeDictionaryDefinitions, sortFrequencyDictionary, sortFrequencyDictionaryOrder, language, primaryReading} = options;
         const tagAggregator = new TranslatorTagAggregator();

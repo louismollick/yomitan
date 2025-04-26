@@ -17,42 +17,19 @@
  */
 
 import 'global-jsdom/register';
-import {DictionaryDatabase} from 'yomitan-node/database/dictionary-database.js';
-import {Translator} from 'ext/js/language/translator.js';
 import {DisplayGenerator} from 'ext/js/display/display-generator.js';
-import type {Summary} from 'types/ext/dictionary-importer';
-import type {LoadMediaRequest} from 'types/ext/display-content-manager.js';
+import {Backend} from 'ext/js/background/backend.js';
 import type {TermDictionaryEntry} from 'types/ext/dictionary.js';
-import type {DisplayContentManager} from 'ext/js/display/display-content-manager.js';
-
-interface LookupTermResult {dictionaryEntries: TermDictionaryEntry[], originalTextLength: number}
+import type {Summary} from 'types/ext/dictionary-importer';
+import type {DisplayContentManager} from 'ext/js/display/display-content-manager';
+import type {LoadMediaRequest} from 'types/ext/display-content-manager';
+import type {ApiSurface} from 'types/ext/api';
 
 const linkElements = document.createElement('div');
 linkElements.innerHTML = '<link rel="icon" type="image/png" href="/images/icon16.png" sizes="16x16"><link rel="icon" type="image/png" href="/images/icon19.png" sizes="19x19"><link rel="icon" type="image/png" href="/images/icon32.png" sizes="32x32"><link rel="icon" type="image/png" href="/images/icon38.png" sizes="38x38"><link rel="icon" type="image/png" href="/images/icon48.png" sizes="48x48"><link rel="icon" type="image/png" href="/images/icon64.png" sizes="64x64"><link rel="icon" type="image/png" href="/images/icon128.png" sizes="128x128"><link rel="stylesheet" type="text/css" href="/css/material.css"><link rel="stylesheet" type="text/css" href="/css/display.css"><link rel="stylesheet" type="text/css" href="/css/display-pronunciation.css"><link rel="stylesheet" type="text/css" href="/css/structured-content.css">';
 while (linkElements.firstChild) {
     document.head.appendChild(linkElements.firstChild);
 }
-
-/**
- * Simple media loader implementation for the dictionary importer
- */
-export class SimpleMediaLoader {
-    /**
-     * Gets image details from content
-     * @param {ArrayBuffer} content The image content buffer
-     * @param {string} _mediaType The media type (unused)
-     * @returns {{content: ArrayBuffer, width: number, height: number}} The image details
-     */
-    async getImageDetails(content: ArrayBuffer, _mediaType: string): Promise<{content: ArrayBuffer, width: number, height: number}> {
-        // Return a minimal implementation that satisfies the interface
-        return {
-            content,
-            width: 0,
-            height: 0,
-        };
-    }
-}
-
 /**
  * Simple implementation of DisplayContentManager for server-side rendering
  */
@@ -155,11 +132,7 @@ class ServerDisplayContentManager implements DisplayContentManager {
  */
 export class Yomitan {
     /** The dictionary database instance */
-    private dictionaryDatabase!: DictionaryDatabase;
-    /** The translator instance */
-    private translator!: Translator;
-    /** The name of the loaded dictionary */
-    private dictionaryName = '';
+    private backend!: Backend;
     /** The display generator */
     private displayGenerator: DisplayGenerator | null = null;
     /** Dictionary info */
@@ -167,22 +140,13 @@ export class Yomitan {
 
     /**
      * Lookup a term
-     * @param {string} term The term to lookup
-     * @returns {Promise<LookupTermResult>} The lookup result
-     * @private
+     * @param {string} text The term to lookup
+     * @returns {Promise<ApiSurface['termsFind']['return']>} The lookup result
      */
-    public async lookupTerm(term: string) {
+    public async lookupTerm(text: string): Promise<ApiSurface['termsFind']['return']> {
         try {
-            if (!term) {
-                throw new Error('Term parameter is required');
-            }
-
-            if (!this.translator) {
-                throw new Error('Translator not initialized');
-            }
-
-            // Perform the lookup
-            return this.translator.findTerms('simple', term, {}) as Promise<LookupTermResult>;
+            // eslint-disable-next-line no-underscore-dangle
+            return this.backend._onApiTermsFind({text, details: {}, optionsContext: {}});
         } catch (error) {
             console.error('Error during lookup:', error);
             throw new Error('An error occurred during lookup');
@@ -229,20 +193,8 @@ export class Yomitan {
      */
     public async initialize(): Promise<boolean> {
         try {
-            console.log('Initializing dictionary database...');
-            this.dictionaryDatabase = new DictionaryDatabase();
-            await this.dictionaryDatabase.prepare();
-            console.log('Dictionary database initialized');
-
-            // Initialize translator
-            console.log('Initializing translator...');
-            // @ts-expect-error - The Sqlite DictionaryDatabase is missing some unimportant properties
-            this.translator = new Translator(this.dictionaryDatabase);
-            this.translator.prepare();
-            console.log('Translator initialized');
-
-            // Get dictionary info for display
-            this.dictionaryInfo = await this.dictionaryDatabase.getDictionaryInfo();
+            this.backend = new Backend();
+            await this.backend.prepare();
 
             // Initialize display generator
             console.log('Initializing display generator...');
