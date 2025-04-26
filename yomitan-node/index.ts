@@ -19,7 +19,7 @@
 import 'global-jsdom/register';
 import path from 'path';
 import fs from 'fs';
-import {DictionaryDatabase} from 'node/database/dictionary-database.js';
+import {DictionaryDatabase} from 'yomitan-node/database/dictionary-database.js';
 import {DictionaryImporter} from 'ext/js/dictionary/dictionary-importer.js';
 import {Translator} from 'ext/js/language/translator.js';
 import {createFindTermsOptions} from 'test/utilities/translator.js';
@@ -250,24 +250,9 @@ export class Yomitan {
             console.log('Dictionary database initialized');
 
             // Import dictionary from zip file
-            // Try different possible locations for the dictionary zip file
-            const possiblePaths = [
-                path.resolve(process.cwd(), 'jitendex-yomitan.zip'),
-                path.resolve(process.cwd(), 'node/jitendex-yomitan.zip'),
-                path.resolve(process.cwd(), '../jitendex-yomitan.zip'),
-            ];
-
-            let zipFilePath = '';
-            for (const p of possiblePaths) {
-                if (fs.existsSync(p)) {
-                    zipFilePath = p;
-                    break;
-                }
-            }
-
-            if (!zipFilePath) {
-                console.error('Dictionary zip file not found in any of these locations:', possiblePaths);
-                console.error('Please place the jitendex-yomitan.zip file in one of these locations and restart the server.');
+            const zipFilePath = path.resolve(process.cwd(), 'jitendex-yomitan.zip');
+            if (!fs.existsSync(zipFilePath)) {
+                console.error('Dictionary zip file not found:', zipFilePath);
                 throw new Error('Dictionary file not found');
             }
 
