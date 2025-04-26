@@ -16,7 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Yomitan} from './dist/index';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+import {Yomitan} from './dist/index.js';
 
 const yomitan = new Yomitan();
 

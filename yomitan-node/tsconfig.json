@@ -17,6 +17,6 @@
         "module": "ESNext",
         "noEmit": true
     },
-    "files": ["index.ts"],
-    "exclude": ["**/*.js"]
+    "include": ["."],
+    "exclude": ["node_modules", "dist"]
 }

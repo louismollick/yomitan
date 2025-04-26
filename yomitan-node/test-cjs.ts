@@ -16,13 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import {Yomitan} from './dist/index.cjs';
 
 const yomitan = new Yomitan();
 
-yomitan.initialize().then(() => {
+void yomitan.initialize().then(() => {
     console.log('Initialized');
-    yomitan.lookupTerm('日本語').then((result) => {
+    void yomitan.lookupTerm('日本語').then((result) => {
         console.log(yomitan.generateHtml(result.dictionaryEntries));
     });
 });

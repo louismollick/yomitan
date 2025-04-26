@@ -1,17 +1,17 @@
 {
     "name": "yomitan-node",
     "version": "1.0.0",
-    "description": "Node.js Express server for Yomitan dictionary lookups",
-    "main": "dist/index.js",
-    "module": "dist/index.mjs",
+    "description": "Node library for Yomitan dictionary lookups",
+    "main": "dist/index.cjs",
+    "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "type": "module",
     "scripts": {
         "build": "tsup --config tsup.config.ts",
         "release": "pnpm run build && changeset publish",
         "lint": "tsc",
-        "dev:mjs": "tsx test-mjs.ts",
-        "dev:cjs": "tsx test-cjs.ts"
+        "test:mjs": "tsx test-mjs.ts",
+        "test:cjs": "tsx test-cjs.ts"
     },
     "dependencies": {
         "@libsql/client": "^0.15.4",

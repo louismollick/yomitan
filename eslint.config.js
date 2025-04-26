@@ -70,7 +70,7 @@ async function getDependencies(scriptPaths) {
  */
 export default [
     {
-        ignores: ['ext/lib/', 'dev/lib/handlebars/', '**/node_modules/', '**/builds/', 'test-results/'],
+        ignores: ['ext/lib/', 'dev/lib/handlebars/', '**/node_modules/', '**/builds/', 'test-results/', '**/dist/', '**/.tsup/'],
     },
     ...compat.extends(
         'eslint:recommended',

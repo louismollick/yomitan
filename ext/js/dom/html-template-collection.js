@@ -29,6 +29,7 @@ export class HtmlTemplateCollection {
      * @param {string[]} urls
      */
     async loadFromFiles(urls) {
+        // eslint-disable-next-line unicorn/prefer-module
         const distDir = import.meta.dirname ?? __dirname; // TODO: figure how to do this cleaner by separating exports for ESM/CJS
         const htmlRawArray = await Promise.all(urls.map((url) => fs.readFileSync(path.join(distDir, url), 'utf8')));
         const domParser = new DOMParser();

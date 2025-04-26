@@ -319,7 +319,7 @@ export class DictionaryDatabase {
                     results.push({
                         index: i,
                         term: row.term,
-                        // @ts-ignore - While there's 3 separate types, they all have same fields
+                        // @ts-expect-error - While there's 3 separate types, they all have same fields
                         mode: row.mode,
                         data: parseJson(row.data),
                         dictionary: row.dictionary,
@@ -493,22 +493,22 @@ export class DictionaryDatabase {
         let total: DictionaryCountGroup | null = null;
 
         if (getTotal) {
-            total = counts.reduce((acc, cur) => {
-                acc.terms! += cur.terms!;
-                acc.kanji! += cur.kanji!;
-                acc.termMeta! += cur.termMeta!;
-                acc.kanjiMeta! += cur.kanjiMeta!;
-                acc.tagMeta! += cur.tagMeta!;
-                acc.media! += cur.media!;
-                return acc;
-            }, {
+            total = {
                 terms: 0,
                 kanji: 0,
                 termMeta: 0,
                 kanjiMeta: 0,
                 tagMeta: 0,
                 media: 0,
-            });
+            };
+            for (const count of counts) {
+                total.terms! += count.terms!;
+                total.kanji! += count.kanji!;
+                total.termMeta! += count.termMeta!;
+                total.kanjiMeta! += count.kanjiMeta!;
+                total.tagMeta! += count.tagMeta!;
+                total.media! += count.media!;
+            }
         }
 
         return {total, counts};
