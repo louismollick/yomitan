@@ -17,14 +17,10 @@
  */
 
 import 'global-jsdom/register';
-import path from 'path';
-import fs from 'fs';
 import {DictionaryDatabase} from 'yomitan-node/database/dictionary-database.js';
-import {DictionaryImporter} from 'ext/js/dictionary/dictionary-importer.js';
 import {Translator} from 'ext/js/language/translator.js';
-import {createFindTermsOptions} from 'test/utilities/translator.js';
 import {DisplayGenerator} from 'ext/js/display/display-generator.js';
-import type {ImportResult, Summary} from 'types/ext/dictionary-importer';
+import type {Summary} from 'types/ext/dictionary-importer';
 import type {LoadMediaRequest} from 'types/ext/display-content-manager.js';
 import type {TermDictionaryEntry} from 'types/ext/dictionary.js';
 import type {DisplayContentManager} from 'ext/js/display/display-content-manager.js';
@@ -40,7 +36,7 @@ while (linkElements.firstChild) {
 /**
  * Simple media loader implementation for the dictionary importer
  */
-class SimpleMediaLoader {
+export class SimpleMediaLoader {
     /**
      * Gets image details from content
      * @param {ArrayBuffer} content The image content buffer
@@ -185,19 +181,8 @@ export class Yomitan {
                 throw new Error('Translator not initialized');
             }
 
-            // Create options for the lookup
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const options = createFindTermsOptions(this.dictionaryName, {
-                default: {
-                    type: 'terms',
-                    enabledDictionaryMap: [[this.dictionaryName, true]],
-                    removeNonJapaneseCharacters: false,
-                    language: 'ja',
-                },
-            }, 'default');
-
             // Perform the lookup
-            return this.translator.findTerms('simple', term, options) as Promise<LookupTermResult>;
+            return this.translator.findTerms('simple', term, {}) as Promise<LookupTermResult>;
         } catch (error) {
             console.error('Error during lookup:', error);
             throw new Error('An error occurred during lookup');
@@ -248,50 +233,6 @@ export class Yomitan {
             this.dictionaryDatabase = new DictionaryDatabase();
             await this.dictionaryDatabase.prepare();
             console.log('Dictionary database initialized');
-
-            // Import dictionary from zip file
-            const zipFilePath = path.resolve(process.cwd(), 'jitendex-yomitan.zip');
-            if (!fs.existsSync(zipFilePath)) {
-                console.error('Dictionary zip file not found:', zipFilePath);
-                throw new Error('Dictionary file not found');
-            }
-
-            console.log(`Importing dictionary from ${zipFilePath}...`);
-
-            const zipFileContent = fs.readFileSync(zipFilePath);
-            const mediaLoader = new SimpleMediaLoader();
-            const dictionaryImporter = new DictionaryImporter(mediaLoader);
-
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const importResult: ImportResult = await dictionaryImporter.importDictionary(
-                // @ts-expect-error - The Sqlite DictionaryDatabase is missing some unimportant properties
-                this.dictionaryDatabase,
-                zipFileContent.buffer,
-                {
-                    prefixWildcardsSupported: true,
-                    yomitanVersion: '0.0.0.0',
-                },
-            );
-
-            if (importResult.errors && importResult.errors.length > 0) {
-                console.error('Errors during dictionary import:', importResult.errors);
-            }
-
-            for (const err of importResult.errors) {
-                console.error(err.message);
-            }
-
-            const alreadyImported = importResult.errors.some((err) => err.message.includes('is already imported, skipped it'));
-
-            if (importResult.result) {
-                this.dictionaryName = importResult.result.title;
-                console.log(`Dictionary imported: ${this.dictionaryName}`);
-            } else if (alreadyImported) {
-                this.dictionaryName = 'Jitendex.org [2025-03-31]';
-                console.log('Dictionary already imported');
-            } else {
-                throw new Error('Failed to import dictionary');
-            }
 
             // Initialize translator
             console.log('Initializing translator...');

@@ -6,15 +6,20 @@
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "type": "module",
+    "bin": {
+        "yomitan-node": "dist/cli.js"
+    },
     "scripts": {
         "build": "tsup --config tsup.config.ts",
         "release": "pnpm run build && changeset publish",
         "lint": "tsc",
         "test:mjs": "tsx test-mjs.ts",
-        "test:cjs": "tsx test-cjs.ts"
+        "test:cjs": "tsx test-cjs.ts",
+        "cli": "tsx cli.ts"
     },
     "dependencies": {
         "@libsql/client": "^0.15.4",
+        "commander": "^13.1.0",
         "drizzle-orm": "^0.42.0",
         "global-jsdom": "^26.0.0"
     },

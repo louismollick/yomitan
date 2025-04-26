@@ -20,7 +20,7 @@ import {defineConfig} from 'tsup';
 import copy from 'esbuild-plugin-copy';
 
 export default defineConfig({
-    entry: ['index.ts'],
+    entry: ['index.ts', 'cli.ts'],
     format: ['cjs', 'esm'],
     experimentalDts: true,
     clean: true,

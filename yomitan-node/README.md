@@ -35,6 +35,25 @@ npm install
 
 ## Usage
 
+### Command Line Interface (CLI)
+
+The library includes a CLI for common operations:
+
+```bash
+# Display help information
+npm run cli help
+
+# Import a dictionary from a zip file
+npm run cli dictionary:import ./path/to/dictionary.zip
+```
+
+You can also run the CLI directly with tsx:
+
+```bash
+tsx cli.ts help
+tsx cli.ts dictionary:import ./path/to/dictionary.zip
+```
+
 ### ESM (ES Modules)
 
 ```typescript
