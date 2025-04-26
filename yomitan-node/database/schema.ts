@@ -52,16 +52,14 @@ export const terms = sqliteTable(
         sequence: integer('sequence'),
         termTags: text('term_tags'),
     },
-    (table) => {
-        return {
-            dictionaryIdx: index('idx_terms_dictionary').on(table.dictionary),
-            expressionIdx: index('idx_terms_expression').on(table.expression),
-            readingIdx: index('idx_terms_reading').on(table.reading),
-            expressionReverseIdx: index('idx_terms_expression_reverse').on(table.expressionReverse),
-            readingReverseIdx: index('idx_terms_reading_reverse').on(table.readingReverse),
-            sequenceIdx: index('idx_terms_sequence').on(table.sequence),
-        };
-    },
+    (table) => [
+        index('idx_terms_dictionary').on(table.dictionary),
+        index('idx_terms_expression').on(table.expression),
+        index('idx_terms_reading').on(table.reading),
+        index('idx_terms_expression_reverse').on(table.expressionReverse),
+        index('idx_terms_reading_reverse').on(table.readingReverse),
+        index('idx_terms_sequence').on(table.sequence),
+    ],
 );
 
 // Define the schema for the termMeta table
@@ -74,13 +72,11 @@ export const termMeta = sqliteTable(
         mode: text('mode').notNull(),
         data: text('data').notNull(), // JSON string
     },
-    (table) => {
-        return {
-            dictionaryIdx: index('idx_term_meta_dictionary').on(table.dictionary),
-            termIdx: index('idx_term_meta_term').on(table.term),
-            modeIdx: index('idx_term_meta_mode').on(table.mode),
-        };
-    },
+    (table) => [
+        index('idx_term_meta_dictionary').on(table.dictionary),
+        index('idx_term_meta_term').on(table.term),
+        index('idx_term_meta_mode').on(table.mode),
+    ],
 );
 
 // Define the schema for the kanji table
@@ -96,12 +92,10 @@ export const kanji = sqliteTable(
         meanings: text('meanings').notNull(), // JSON string
         stats: text('stats'), // JSON string
     },
-    (table) => {
-        return {
-            dictionaryIdx: index('idx_kanji_dictionary').on(table.dictionary),
-            characterIdx: index('idx_kanji_character').on(table.character),
-        };
-    },
+    (table) => [
+        index('idx_kanji_dictionary').on(table.dictionary),
+        index('idx_kanji_character').on(table.character),
+    ],
 );
 
 // Define the schema for the kanjiMeta table
@@ -114,13 +108,11 @@ export const kanjiMeta = sqliteTable(
         mode: text('mode').notNull(),
         data: text('data').notNull(), // JSON string
     },
-    (table) => {
-        return {
-            dictionaryIdx: index('idx_kanji_meta_dictionary').on(table.dictionary),
-            characterIdx: index('idx_kanji_meta_character').on(table.character),
-            modeIdx: index('idx_kanji_meta_mode').on(table.mode),
-        };
-    },
+    (table) => [
+        index('idx_kanji_meta_dictionary').on(table.dictionary),
+        index('idx_kanji_meta_character').on(table.character),
+        index('idx_kanji_meta_mode').on(table.mode),
+    ],
 );
 
 // Define the schema for the tagMeta table
@@ -135,13 +127,11 @@ export const tagMeta = sqliteTable(
         notes: text('notes').notNull(),
         score: integer('score').notNull(),
     },
-    (table) => {
-        return {
-            dictionaryIdx: index('idx_tag_meta_dictionary').on(table.dictionary),
-            nameIdx: index('idx_tag_meta_name').on(table.name),
-            categoryIdx: index('idx_tag_meta_category').on(table.category),
-        };
-    },
+    (table) => [
+        index('idx_tag_meta_dictionary').on(table.dictionary),
+        index('idx_tag_meta_name').on(table.name),
+        index('idx_tag_meta_category').on(table.category),
+    ],
 );
 
 // Define the schema for the media table
@@ -156,12 +146,10 @@ export const media = sqliteTable(
         height: integer('height').notNull(),
         content: blob('content').notNull(), // Binary data
     },
-    (table) => {
-        return {
-            dictionaryIdx: index('idx_media_dictionary').on(table.dictionary),
-            pathIdx: index('idx_media_path').on(table.path),
-        };
-    },
+    (table) => [
+        index('idx_media_dictionary').on(table.dictionary),
+        index('idx_media_path').on(table.path),
+    ],
 );
 
 export type Dictionary = typeof dictionaries.$inferSelect;
